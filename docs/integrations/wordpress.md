@@ -21,3 +21,12 @@ $airport = map($payload)->to(AirportDto::class);
 $rows = get_option('airports', []);
 $airports = map($rows)->toMany(AirportDto::class);
 ```
+
+## Mapping Different Key Formats
+
+```php
+$airport = map([
+    'airport_code' => sanitize_text_field($_POST['airport_code'] ?? ''),
+    'city_name' => sanitize_text_field($_POST['city_name'] ?? ''),
+])->snakeToCamelKeys()->to(AirportDto::class);
+```

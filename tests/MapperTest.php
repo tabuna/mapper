@@ -13,6 +13,8 @@ use Orchestra\Testbench\TestCase;
 use Tabuna\Map\Mapper;
 use Tabuna\Map\Tests\Dummy\CustomMapperStub;
 use Tabuna\Map\Tests\Dummy\DummyAirport;
+use Tabuna\Map\Tests\Dummy\DummyAirportCamelDto;
+use Tabuna\Map\Tests\Dummy\DummyAirportCamelReadonlyDto;
 use Tabuna\Map\Tests\Dummy\DummyAirportHook;
 use Tabuna\Map\Tests\Dummy\DummyAirportPublicPrivateSource;
 use Tabuna\Map\Tests\Dummy\DummyAirportReadonlyDto;
@@ -358,6 +360,59 @@ class MapperTest extends TestCase
         $this->assertIsArray($mapped);
         $this->assertSame('LPK', $mapped['code']);
         $this->assertSame('Lipetsk', $mapped['city']);
+    }
+
+    public function testItRenamesAttributesBeforeMapping(): void
+    {
+        $mapped = Mapper::map(['iata' => 'LPK', 'location' => 'Lipetsk'])
+            ->rename([
+                'iata'     => 'code',
+                'location' => 'city',
+            ])
+            ->to(DummyAirport::class);
+
+        $this->assertInstanceOf(DummyAirport::class, $mapped);
+        $this->assertSame('LPK', $mapped->code);
+        $this->assertSame('Lipetsk', $mapped->city);
+    }
+
+    public function testItConvertsSnakeCaseKeysToCamelCaseForProperties(): void
+    {
+        $mapped = Mapper::map([
+            'airport_code' => 'LPK',
+            'city_name'    => 'Lipetsk',
+        ])->snakeToCamelKeys()->to(DummyAirportCamelDto::class);
+
+        $this->assertInstanceOf(DummyAirportCamelDto::class, $mapped);
+        $this->assertSame('LPK', $mapped->airportCode);
+        $this->assertSame('Lipetsk', $mapped->cityName);
+    }
+
+    public function testItConvertsSnakeCaseKeysToCamelCaseForReadonlyConstructor(): void
+    {
+        $mapped = Mapper::map([
+            'airport_code' => 'LED',
+            'city_name'    => 'Saint Petersburg',
+        ])->snakeToCamelKeys()->to(DummyAirportCamelReadonlyDto::class);
+
+        $this->assertInstanceOf(DummyAirportCamelReadonlyDto::class, $mapped);
+        $this->assertSame('LED', $mapped->airportCode);
+        $this->assertSame('Saint Petersburg', $mapped->cityName);
+    }
+
+    public function testToArrayAppliesRenameAndCaseRules(): void
+    {
+        $array = Mapper::map([
+            'airport_code' => 'LPK',
+            'city_title'   => 'Lipetsk',
+        ])->rename([
+            'city_title' => 'city_name',
+        ])->snakeToCamelKeys()->toArray();
+
+        $this->assertSame([
+            'airportCode' => 'LPK',
+            'cityName'    => 'Lipetsk',
+        ], $array);
     }
 
     public function testItMapsReadonlyDtoUsingConstructorArguments(): void

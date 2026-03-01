@@ -36,6 +36,15 @@ final class ImportAirportHandler
 $dtos = Mapper::intoMany($payloads, AirportDto::class);
 ```
 
+## Payload Key Alignment
+
+```php
+$dto = Mapper::map($payload)
+    ->rename(['iata_code' => 'code'])
+    ->snakeToCamelKeys()
+    ->to(AirportDto::class);
+```
+
 ## Optional Explicit API
 
 If you don't use bundle registration, you can still map in one call:

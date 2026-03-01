@@ -52,6 +52,18 @@ class Mapper
     protected array $mappers = [];
 
     /**
+     * Source-to-target attribute name map.
+     *
+     * @var array<string, string>
+     */
+    protected array $attributeRenames = [];
+
+    /**
+     * Enable automatic snake_case/kebab-case to camelCase key conversion.
+     */
+    protected bool $snakeToCamel = false;
+
+    /**
      * @param mixed                  $source    The data source to map from.
      * @param ContainerContract|null $container Optional dependency container.
      */
@@ -171,6 +183,34 @@ class Mapper
     }
 
     /**
+     * Rename source attributes before mapping.
+     *
+     * @param array<string, string> $map
+     *
+     * @return $this
+     */
+    public function rename(array $map): self
+    {
+        foreach ($map as $from => $to) {
+            $this->attributeRenames[$from] = $to;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Convert snake_case and kebab-case keys to camelCase before mapping.
+     *
+     * @return $this
+     */
+    public function snakeToCamelKeys(): self
+    {
+        $this->snakeToCamel = true;
+
+        return $this;
+    }
+
+    /**
      * Perform mapping to target class or object.
      *
      * @param class-string $targetClass
@@ -209,7 +249,7 @@ class Mapper
      */
     protected function mapItem(mixed $item, string $targetClass): mixed
     {
-        $attributes = $this->normalizeAttributes($item);
+        $attributes = $this->normalizeForMapping($item);
         $target = $this->makeTarget($targetClass, $attributes);
 
         foreach ($this->mappers as $mapper) {
@@ -329,11 +369,11 @@ class Mapper
             $this->assertCollectionSourceIsIterable();
 
             return Collection::make($this->source)
-                ->map(fn ($item) => $this->normalizeAttributes($item))
+                ->map(fn ($item) => $this->normalizeForMapping($item))
                 ->toArray();
         }
 
-        return $this->normalizeAttributes($this->source);
+        return $this->normalizeForMapping($this->source);
     }
 
     /**
@@ -361,6 +401,113 @@ class Mapper
             is_object($item)           => get_object_vars($item),
             default                    => (array) $item,
         };
+    }
+
+    /**
+     * Normalize and transform source item according to mapper configuration.
+     *
+     * @param mixed $item
+     *
+     * @return array
+     */
+    protected function normalizeForMapping(mixed $item): array
+    {
+        return $this->applyAttributeRules($this->normalizeAttributes($item));
+    }
+
+    /**
+     * Apply attribute rename and key-conversion rules.
+     *
+     * @param array $attributes
+     *
+     * @return array
+     */
+    protected function applyAttributeRules(array $attributes): array
+    {
+        if ($this->attributeRenames !== []) {
+            $renamed = [];
+
+            foreach ($attributes as $key => $value) {
+                $resolvedKey = is_string($key) && array_key_exists($key, $this->attributeRenames)
+                    ? $this->attributeRenames[$key]
+                    : $key;
+
+                $renamed[$resolvedKey] = $value;
+            }
+
+            $attributes = $renamed;
+        }
+
+        if ($this->snakeToCamel) {
+            $attributes = $this->convertArrayKeysToCamelCase($attributes);
+        }
+
+        return $attributes;
+    }
+
+    /**
+     * Convert all associative keys to camelCase recursively.
+     *
+     * @param array $attributes
+     *
+     * @return array
+     */
+    protected function convertArrayKeysToCamelCase(array $attributes): array
+    {
+        if ($this->isListArray($attributes)) {
+            return array_map(
+                fn ($value) => is_array($value) ? $this->convertArrayKeysToCamelCase($value) : $value,
+                $attributes
+            );
+        }
+
+        $converted = [];
+
+        foreach ($attributes as $key => $value) {
+            $resolvedKey = is_string($key) ? $this->toCamelCase($key) : $key;
+
+            $converted[$resolvedKey] = is_array($value)
+                ? $this->convertArrayKeysToCamelCase($value)
+                : $value;
+        }
+
+        return $converted;
+    }
+
+    /**
+     * Check if array keys are a zero-based sequential index.
+     *
+     * @param array $attributes
+     */
+    protected function isListArray(array $attributes): bool
+    {
+        $index = 0;
+
+        foreach (array_keys($attributes) as $key) {
+            if ($key !== $index) {
+                return false;
+            }
+
+            $index++;
+        }
+
+        return true;
+    }
+
+    /**
+     * Convert a key from snake_case / kebab-case to camelCase.
+     */
+    protected function toCamelCase(string $key): string
+    {
+        $key = str_replace('-', '_', $key);
+        $segments = explode('_', $key);
+        $first = array_shift($segments);
+
+        if ($first === null) {
+            return $key;
+        }
+
+        return $first.implode('', array_map('ucfirst', $segments));
     }
 
     /**

@@ -14,6 +14,8 @@ All notable changes to this project will be documented in this file.
 - `mapUsingPsrContainer(...)` for explicit one-shot PSR-11 mapping.
 - `resetContainer()` to clear global container configuration.
 - `toMany(...)` explicit collection mapping API.
+- `rename([...])` for source-to-target key aliases.
+- `snakeToCamelKeys()` for snake_case/kebab-case payloads.
 - Runtime auto-detection for containers from `$GLOBALS['kernel']` and `$GLOBALS['container']`.
 - Laravel auto-wiring through package service provider.
 - Symfony integration bundle (`TabunaMapBundle`).

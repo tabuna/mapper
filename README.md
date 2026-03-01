@@ -85,6 +85,28 @@ final class AirportDto
 $airport = map(['code' => 'LPK', 'city' => 'Lipetsk'])->to(AirportDto::class);
 ```
 
+### Key Mapping (Value for Real Payloads)
+
+Use `rename()` when payload keys don't match target fields:
+
+```php
+$airport = map(['iata' => 'LPK', 'location' => 'Lipetsk'])
+    ->rename([
+        'iata' => 'code',
+        'location' => 'city',
+    ])
+    ->to(AirportDto::class);
+```
+
+Use `snakeToCamelKeys()` for snake_case / kebab-case payloads:
+
+```php
+$airport = map([
+    'airport_code' => 'LPK',
+    'city_name' => 'Lipetsk',
+])->snakeToCamelKeys()->to(AirportDto::class);
+```
+
 If you want explicit one-shot PSR wiring, use:
 
 ```php
