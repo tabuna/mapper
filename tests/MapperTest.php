@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Tabuna\Map\Tests;
 
+use Illuminate\Container\Container;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use LogicException;
 use Orchestra\Testbench\TestCase;
 use Tabuna\Map\Mapper;
 use Tabuna\Map\Tests\Dummy\CustomMapperStub;
@@ -15,6 +17,8 @@ use Tabuna\Map\Tests\Dummy\DummyAirportPublicPrivateSource;
 use Tabuna\Map\Tests\Dummy\DummyAirportWithPrivateCode;
 use Tabuna\Map\Tests\Dummy\DummyWithContainer;
 use Tabuna\Map\Tests\Dummy\EloquentAirportStub;
+use Tabuna\Map\Tests\Dummy\InvalidMapperStub;
+use UnexpectedValueException;
 
 class MapperTest extends TestCase
 {
@@ -92,7 +96,6 @@ class MapperTest extends TestCase
         $this->assertSame('Lipetsk', $mapped->city);
     }
 
-    /*
     public function testItUsesCustomMapperClass(): void
     {
         $data = ['code' => 'LPK', 'city' => 'Lipetsk'];
@@ -104,16 +107,16 @@ class MapperTest extends TestCase
         $this->assertSame('custom-mapped', $mapped->code);
         $this->assertSame('custom-mapped', $mapped->city);
     }
-*/
-    /*
+
     public function testItUsesCustomMapperClosure(): void
     {
         $data = ['code' => 'LPK', 'city' => 'Lipetsk'];
 
         $mapped = Mapper::map($data)
-            ->with(function ($mapper, $item) {
+            ->with(function ($item, $target) {
+                $this->assertInstanceOf(DummyAirport::class, $target);
+                $this->assertSame('LPK', $item['code']);
 
-                dd($mapper, $item);
                 $obj = new DummyAirport();
                 $obj->code = 'closure-mapped';
                 $obj->city = 'closure-mapped';
@@ -125,7 +128,40 @@ class MapperTest extends TestCase
         $this->assertSame('closure-mapped', $mapped->code);
         $this->assertSame('closure-mapped', $mapped->city);
     }
-*/
+
+    public function testItUsesCustomMapperForCollections(): void
+    {
+        $mapped = Mapper::map([['code' => 'LPK', 'city' => 'Lipetsk']])
+            ->collection()
+            ->with(function ($item, $target) {
+                $target->code = strtolower($item['code']);
+                $target->city = strtoupper($item['city']);
+
+                return $target;
+            })
+            ->to(DummyAirport::class);
+
+        $this->assertSame('lpk', $mapped->first()->code);
+        $this->assertSame('LIPETSK', $mapped->first()->city);
+    }
+
+    public function testItThrowsWhenMapperIsNotCallable(): void
+    {
+        $this->expectException(LogicException::class);
+
+        Mapper::map(['code' => 'LPK'])
+            ->with(InvalidMapperStub::class)
+            ->to(DummyAirport::class);
+    }
+
+    public function testItThrowsWhenMapperReturnsNonObject(): void
+    {
+        $this->expectException(UnexpectedValueException::class);
+
+        Mapper::map(['code' => 'LPK'])
+            ->with(fn () => 'invalid')
+            ->to(DummyAirport::class);
+    }
 
     public function testHelperFunctionMapsRequestToObject(): void
     {
@@ -292,5 +328,17 @@ class MapperTest extends TestCase
 
         $this->assertSame(['code' => 'LPK'], $array);
         $this->assertArrayNotHasKey('secret', $array);
+    }
+
+    public function testItCanMapUsingExplicitContainer(): void
+    {
+        $container = new Container();
+        $container->bind(DummyAirport::class, DummyAirportWithPrivateCode::class);
+
+        $mapped = Mapper::mapUsingContainer(['city' => 'Lipetsk'], $container)
+            ->to(DummyAirport::class);
+
+        $this->assertInstanceOf(DummyAirportWithPrivateCode::class, $mapped);
+        $this->assertSame('Lipetsk', $mapped->city);
     }
 }

@@ -1,9 +1,11 @@
 {
     "name": "tabuna/map",
-    "description": "A simple object mapper for Laravel with request and array support.",
+    "description": "A flexible PHP object mapper with Laravel-first DX and framework-agnostic core.",
     "keywords": [
         "mapper",
         "laravel",
+        "symfony",
+        "wordpress",
         "data-mapping",
         "dto",
         "request-mapping"
@@ -18,7 +20,11 @@
     ],
     "require": {
         "php": "^8.0",
-        "laravel/framework": "^9.0|^10.0|^11.0|^12.0"
+        "illuminate/collections": "^9.0|^10.0|^11.0|^12.0",
+        "illuminate/container": "^9.0|^10.0|^11.0|^12.0",
+        "illuminate/contracts": "^9.0|^10.0|^11.0|^12.0",
+        "illuminate/database": "^9.0|^10.0|^11.0|^12.0",
+        "illuminate/http": "^9.0|^10.0|^11.0|^12.0"
     },
     "conflict": {
         "orchestra/testbench-core": "<6.24.1"

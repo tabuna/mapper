@@ -6,7 +6,9 @@ use Illuminate\Container\Container;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use LogicException;
 use ReflectionProperty;
+use UnexpectedValueException;
 
 class Mapper
 {
@@ -24,6 +26,11 @@ class Mapper
      * The IoC container used to resolve mappers and target classes.
      */
     protected Container $container;
+
+    /**
+     * @var array<int, callable|class-string>
+     */
+    protected array $mappers = [];
 
     /**
      * @param mixed          $source    The data source to map from.
@@ -53,6 +60,14 @@ class Mapper
     }
 
     /**
+     * Create a new Mapper instance with an explicit container.
+     */
+    public static function mapUsingContainer(mixed $source, Container $container): self
+    {
+        return new self($source, $container);
+    }
+
+    /**
      * Enable collection mode (map each item in iterable).
      *
      * @return $this
@@ -60,6 +75,20 @@ class Mapper
     public function collection(): self
     {
         $this->isCollection = true;
+
+        return $this;
+    }
+
+    /**
+     * Register a custom mapper callback or invokable class name.
+     *
+     * @param callable|class-string $mapper
+     *
+     * @return $this
+     */
+    public function with(callable|string $mapper): self
+    {
+        $this->mappers[] = $mapper;
 
         return $this;
     }
@@ -74,7 +103,7 @@ class Mapper
     public function to(string $targetClass)
     {
         if ($this->isCollection) {
-            return collect($this->source)
+            return Collection::make($this->source)
                 ->map(fn ($item) => $this->mapItem($item, $targetClass));
         }
 
@@ -91,21 +120,25 @@ class Mapper
      */
     protected function mapItem(mixed $item, string $targetClass): mixed
     {
-        /*
-        foreach ($this->mappers as $mapper) {
-            if (is_string($mapper)) {
-                $mapper = $this->container->make($mapper);
-            }
-
-            if (is_callable($mapper)) {
-                return $mapper($this, $item);
-            }
-
-            throw new LogicException('Each mapper must be a class name or a callable.');
-        }
-        */
-
         $target = $this->container->make($targetClass);
+
+        foreach ($this->mappers as $mapper) {
+            $resolver = is_string($mapper)
+                ? $this->container->make($mapper)
+                : $mapper;
+
+            if (! is_callable($resolver)) {
+                throw new LogicException('Each mapper must be a callable or an invokable class name.');
+            }
+
+            $result = $resolver($item, $target);
+
+            if (! is_object($result)) {
+                throw new UnexpectedValueException('Custom mapper must return an object.');
+            }
+
+            return $result;
+        }
 
         return $this->fill($target, $item);
     }
@@ -143,7 +176,7 @@ class Mapper
     public function toArray(): array
     {
         if ($this->isCollection) {
-            return collect($this->source)
+            return Collection::make($this->source)
                 ->map(fn ($item) => $this->normalizeAttributes($item))
                 ->toArray();
         }

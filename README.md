@@ -1,7 +1,7 @@
-# Laravel Mapper
+# PHP Mapper
 
-A simple and elegant object mapper for Laravel.
-It makes mapping arrays, requests, and collections into Eloquent models or any classes easy and convenient.
+A simple and elegant object mapper for PHP.
+It maps arrays, JSON, requests, and collections into Eloquent models or plain classes with a Laravel-first API and framework-agnostic core.
 
 
 To install, run:
@@ -34,6 +34,17 @@ class AirportController extends Controller
 The `to()` method creates a new instance of the target class and populates it with mapped data.
 Only writable public properties are assigned for plain PHP objects (private, protected, static, and readonly properties are skipped).
 
+If you need full control over dependency resolution, use an explicit container:
+
+```php
+use Illuminate\Container\Container;
+
+$container = new Container();
+
+$airport = Mapper::mapUsingContainer($data, $container)
+    ->to(Airport::class);
+```
+
 ### Mapping Collections
 
 If the source data is an array or a collection, you can call `collection()` before `to()` to map each item individually:
@@ -62,18 +73,18 @@ $json = '{"code": "LPK", "city": "Lipetsk"}';
 $airport = map($json)->to(Airport::class);
 ```
 
-<!--
 ### Customizing Mapping
 
-By default, the Mapper will create objects even if some properties are missing. 
-This is useful for incremental object building.
-You can specify a custom mapper class or a closure to override default mapping behavior:
+You can override the default hydration logic by registering a custom mapper callback or an invokable class:
 
 ```php
 $airport = map($data)
-    ->with(fn ($mapper, $data) => new Airport([
-        'code' => strtoupper($data['code'])
-    ]))
+    ->with(function (array $item, Airport $target) {
+        $target->code = strtoupper($item['code']);
+        $target->city = $item['city'];
+
+        return $target;
+    })
     ->to(Airport::class);
 ```
 
@@ -84,7 +95,8 @@ $airport = map($data)
     ->with(CustomAirportMapper::class)
     ->to(Airport::class);
 ```
--->
+
+Custom mappers must return an object. If several mappers are registered, the first one is used.
 
 
 ### Serializing to Array or JSON

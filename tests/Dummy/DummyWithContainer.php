@@ -2,17 +2,17 @@
 
 namespace Tabuna\Map\Tests\Dummy;
 
-use Illuminate\Foundation\Application;
+use Illuminate\Container\Container;
 
 class DummyWithContainer extends DummyAirport
 {
     public $version;
 
     /**
-     * @param Application $application
+     * @param Container $container
      */
-    public function __construct(Application $application)
+    public function __construct(Container $container)
     {
-       $this->version = $application->version();
+        $this->version = $container::class;
     }
 }
