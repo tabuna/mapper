@@ -1,6 +1,6 @@
 <?php
 
-namespace Tabuna\Map\Support;
+namespace Tabuna\Map\Target;
 
 use function array_diff;
 use function array_keys;

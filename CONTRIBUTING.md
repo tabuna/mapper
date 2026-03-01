@@ -11,15 +11,16 @@ composer install
 ## Architecture Map
 
 - `src/Mapper.php`: thin public API facade.
-- `src/Support/ContainerResolver.php`: runtime container strategy.
-- `src/Support/FrameworkContainerDetector.php`: framework runtime probes (Laravel/Symfony/global).
-- `src/Support/SourceNormalizer.php`: input normalization from arrays/objects/requests/JSON.
-- `src/Support/Source/Extractors/*`: framework/client-specific payload extractors (Laravel request, HTTP clients, Symfony bags).
+- `src/Container/ContainerResolver.php`: runtime container strategy.
+- `src/Container/FrameworkContainerDetector.php`: framework runtime probes (Laravel/Symfony/global).
+- `src/Container/Contracts/*`: explicit container-related contracts for supported runtime objects.
+- `src/Source/SourceNormalizer.php`: input normalization from arrays/objects/requests/JSON.
+- `src/Source/Extractors/*`: framework/client-specific payload extractors (Laravel request, HTTP clients, Symfony bags).
   Keep framework extractors explicit (contracts/classes), avoid broad method probing for framework-only behavior.
-- `src/Support/AttributeRules.php`: payload shaping and key transforms.
-- `src/Support/TargetFactory.php`: constructor-aware target creation.
-- `src/Support/TargetHydrator.php`: property fill + strict validation.
-- `src/Support/EloquentModelSupport.php`: isolated Eloquent-specific hydration/strict rules.
+- `src/Transform/AttributeRules.php`: payload shaping and key transforms.
+- `src/Target/TargetFactory.php`: constructor-aware target creation.
+- `src/Target/TargetHydrator.php`: property fill + strict validation.
+- `src/Target/EloquentModelSupport.php`: isolated Eloquent-specific hydration/strict rules.
 - `src/Support/helpers.php`: only global `map()` helper, no framework-specific behavior.
 
 ## Quality Checklist

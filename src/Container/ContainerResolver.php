@@ -1,6 +1,6 @@
 <?php
 
-namespace Tabuna\Map\Support;
+namespace Tabuna\Map\Container;
 
 use Illuminate\Container\Container;
 use Illuminate\Contracts\Container\Container as ContainerContract;
@@ -98,7 +98,7 @@ class ContainerResolver
             return new PsrContainerAdapter($candidate);
         }
 
-        if (is_object($candidate) && method_exists($candidate, 'get') && method_exists($candidate, 'has')) {
+        if (SymfonyContainerAdapter::supports($candidate)) {
             return new PsrContainerAdapter(new SymfonyContainerAdapter($candidate));
         }
 

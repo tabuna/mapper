@@ -1,13 +1,15 @@
 <?php
 
-namespace Tabuna\Map\Support;
+namespace Tabuna\Map\Source;
 
-use Illuminate\Contracts\Support\Arrayable;
-use Tabuna\Map\Support\Source\Contracts\ObjectPayloadExtractor;
-use Tabuna\Map\Support\Source\Extractors\HttpClientResponseExtractor;
-use Tabuna\Map\Support\Source\Extractors\MethodPayloadExtractor;
-use Tabuna\Map\Support\Source\Extractors\PropertyBagPayloadExtractor;
-use Tabuna\Map\Support\Source\Extractors\ValidatedPayloadExtractor;
+use Tabuna\Map\Source\Contracts\ObjectPayloadExtractor;
+use Tabuna\Map\Source\Extractors\ArrayableObjectExtractor;
+use Tabuna\Map\Source\Extractors\HttpClientResponseExtractor;
+use Tabuna\Map\Source\Extractors\IlluminateRequestExtractor;
+use Tabuna\Map\Source\Extractors\PsrServerRequestExtractor;
+use Tabuna\Map\Source\Extractors\SymfonyRequestExtractor;
+use Tabuna\Map\Source\Extractors\ValidatedPayloadExtractor;
+use Tabuna\Map\Source\Extractors\WordPressRestRequestExtractor;
 
 class SourceNormalizer
 {
@@ -23,9 +25,12 @@ class SourceNormalizer
     {
         $this->objectExtractors = $objectExtractors ?? [
             new ValidatedPayloadExtractor(),
-            new MethodPayloadExtractor(['all', 'toArray', 'get_params', 'getParsedBody']),
-            new PropertyBagPayloadExtractor(['request', 'query', 'attributes']),
+            new IlluminateRequestExtractor(),
+            new SymfonyRequestExtractor(),
+            new WordPressRestRequestExtractor(),
+            new PsrServerRequestExtractor(),
             new HttpClientResponseExtractor(),
+            new ArrayableObjectExtractor(),
         ];
     }
 
@@ -79,34 +84,6 @@ class SourceNormalizer
             }
         }
 
-        if ($item instanceof Arrayable) {
-            return $item->toArray();
-        }
-
         return get_object_vars($item);
-    }
-
-    /**
-     * Try extracting validated payload from Laravel-style request objects.
-     */
-    public function extractValidatedAttributes(object $item): ?array
-    {
-        return (new ValidatedPayloadExtractor())->extract($item);
-    }
-
-    /**
-     * Try extracting array payload via a parameterless method.
-     */
-    public function extractAttributesFromMethod(object $item, string $method): ?array
-    {
-        return (new MethodPayloadExtractor([$method]))->extract($item);
-    }
-
-    /**
-     * Try extracting array payload from Symfony-like request bags.
-     */
-    public function extractAttributesFromPropertyBag(object $item, string $property): ?array
-    {
-        return (new PropertyBagPayloadExtractor([$property]))->extract($item);
     }
 }

@@ -7,13 +7,13 @@ use Illuminate\Support\Collection;
 use InvalidArgumentException;
 use LogicException;
 use Psr\Container\ContainerInterface;
-use Tabuna\Map\Support\AttributeRules;
-use Tabuna\Map\Support\ContainerResolver;
-use Tabuna\Map\Support\PsrContainerAdapter;
-use Tabuna\Map\Support\Source\Contracts\ObjectPayloadExtractor;
-use Tabuna\Map\Support\SourceNormalizer;
-use Tabuna\Map\Support\TargetFactory;
-use Tabuna\Map\Support\TargetHydrator;
+use Tabuna\Map\Container\ContainerResolver;
+use Tabuna\Map\Container\PsrContainerAdapter;
+use Tabuna\Map\Source\Contracts\ObjectPayloadExtractor;
+use Tabuna\Map\Source\SourceNormalizer;
+use Tabuna\Map\Target\TargetFactory;
+use Tabuna\Map\Target\TargetHydrator;
+use Tabuna\Map\Transform\AttributeRules;
 use UnexpectedValueException;
 
 class Mapper
@@ -409,14 +409,6 @@ class Mapper
     protected function normalizeObjectAttributes(object $item): array
     {
         return $this->sourceNormalizer->normalizeObjectAttributes($item);
-    }
-
-    /**
-     * Try extracting array payload via a parameterless method.
-     */
-    protected function extractAttributesFromMethod(object $item, string $method): ?array
-    {
-        return $this->sourceNormalizer->extractAttributesFromMethod($item, $method);
     }
 
     /**

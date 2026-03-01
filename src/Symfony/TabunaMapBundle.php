@@ -3,8 +3,8 @@
 namespace Tabuna\Map\Symfony;
 
 use Symfony\Component\HttpKernel\Bundle\Bundle;
+use Tabuna\Map\Container\SymfonyContainerAdapter;
 use Tabuna\Map\Mapper;
-use Tabuna\Map\Support\SymfonyContainerAdapter;
 
 class TabunaMapBundle extends Bundle
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace Tabuna\Map\Support;
+namespace Tabuna\Map\Target;
 
 use Illuminate\Contracts\Container\Container as ContainerContract;
 use ReflectionClass;

@@ -1,6 +1,6 @@
 <?php
 
-namespace Tabuna\Map\Support;
+namespace Tabuna\Map\Transform;
 
 use function array_keys;
 

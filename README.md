@@ -42,20 +42,22 @@ composer require tabuna/map
 
 The public API stays minimal (`map()->to()`) while internals are separated by responsibility:
 
-- `Support/ContainerResolver`: global + auto-detected container resolution.
-- `Support/FrameworkContainerDetector`: isolated Laravel/Symfony/global runtime detection.
-- `Support/SourceNormalizer`: request/object/JSON payload normalization via pluggable source extractors.
-- `Support/AttributeRules`: `path`, `only`, `except`, `rename`, camel-case transforms.
-- `Support/TargetFactory`: constructor-aware target instantiation.
-- `Support/TargetHydrator`: filling + strict unknown-attribute validation.
-- `Support/EloquentModelSupport`: isolated Eloquent-specific behavior.
+- `Container/ContainerResolver`: global + auto-detected container resolution.
+- `Container/FrameworkContainerDetector`: isolated Laravel/Symfony/global runtime detection.
+- `Source/SourceNormalizer`: request/object/JSON payload normalization via explicit source extractors.
+- `Transform/AttributeRules`: `path`, `only`, `except`, `rename`, camel-case transforms.
+- `Target/TargetFactory`: constructor-aware target instantiation.
+- `Target/TargetHydrator`: filling + strict unknown-attribute validation.
+- `Target/EloquentModelSupport`: isolated Eloquent-specific behavior.
 - `Support/helpers.php`: only `map()` helper, no framework-specific runtime logic.
 
 ## Framework Auto Integration
 
 - Laravel: container is wired automatically via package discovery.
 - Symfony: use `Tabuna\Map\Symfony\TabunaMapBundle` once, then `map()->to` works everywhere.
-- Custom runtimes: Mapper can auto-detect `$GLOBALS['kernel']` or `$GLOBALS['container']` when they expose a PSR-11 container.
+- Custom runtimes:
+  - `$GLOBALS['kernel']` is supported when it is Symfony Kernel or implements `Tabuna\Map\Container\Contracts\KernelContainerProvider`.
+  - `$GLOBALS['container']` is supported when it is PSR-11 or implements `Tabuna\Map\Container\Contracts\SymfonyContainerLike`.
 
 ### Mapping Data
 
@@ -249,7 +251,7 @@ Custom mappers must return an object. If several mappers are registered, the fir
 For custom source objects (SDK responses, proprietary request wrappers), add your extractor:
 
 ```php
-use Tabuna\Map\Support\Source\Contracts\ObjectPayloadExtractor;
+use Tabuna\Map\Source\Contracts\ObjectPayloadExtractor;
 
 final class CustomApiExtractor implements ObjectPayloadExtractor
 {

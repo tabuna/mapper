@@ -1,8 +1,8 @@
 <?php
 
-namespace Tabuna\Map\Support\Source\Extractors;
+namespace Tabuna\Map\Source\Extractors;
 
-use Tabuna\Map\Support\Source\Contracts\ObjectPayloadExtractor;
+use Tabuna\Map\Source\Contracts\ObjectPayloadExtractor;
 use Throwable;
 
 class ValidatedPayloadExtractor implements ObjectPayloadExtractor

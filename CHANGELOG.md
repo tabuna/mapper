@@ -33,12 +33,15 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Improved mapper safety for non-public and readonly properties.
-- Improved source normalization: request-like objects are mapped directly via `all()`, `get_params()`, or `getParsedBody()`.
+- Improved source normalization: framework payload extraction now relies on explicit supported classes/contracts instead of generic method probing.
 - Added Laravel FormRequest-aware source normalization: `validated()` / `safe()->all()` now has priority over raw `all()`.
 - Restricted validated payload extraction to explicit supported sources (`Illuminate\Foundation\Http\FormRequest`) instead of generic method probing.
 - Added Symfony request bag normalization (`$request->request->all()` / query bag) for zero-config mapping.
 - Added HTTP client response normalization for Laravel HTTP (`json()` / `body()`) and Guzzle/PSR-7 (`getBody()`).
 - Restricted HTTP response extraction to explicit supported classes/contracts (`Illuminate\Http\Client\Response`, `Psr\Http\Message\ResponseInterface`).
+- Added explicit runtime container contracts (`KernelContainerProvider`, `SymfonyContainerLike`) and removed container `method_exists` probing.
+- Refactored internal source/target/container/rules components into dedicated top-level directories (`src/Container`, `src/Source`, `src/Target`, `src/Transform`).
+- Split monolithic `MapperTest` into focused test suites by behavior domain for maintainability.
 - Reduced hard framework coupling: `illuminate/http` and `illuminate/database` are now optional dependencies.
 - Refactored internals: `Mapper` now delegates to dedicated support components (container, normalization, rules, factory, hydrator).
 - Moved framework runtime probing into dedicated `FrameworkContainerDetector`.

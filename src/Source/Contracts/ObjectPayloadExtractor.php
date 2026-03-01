@@ -1,6 +1,6 @@
 <?php
 
-namespace Tabuna\Map\Support\Source\Contracts;
+namespace Tabuna\Map\Source\Contracts;
 
 interface ObjectPayloadExtractor
 {

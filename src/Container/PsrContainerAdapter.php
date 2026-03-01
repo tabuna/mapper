@@ -1,6 +1,6 @@
 <?php
 
-namespace Tabuna\Map\Support;
+namespace Tabuna\Map\Container;
 
 use Illuminate\Container\Container;
 use Psr\Container\ContainerInterface;
