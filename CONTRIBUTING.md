@@ -1,0 +1,33 @@
+# Contributing
+
+Thanks for improving `tabuna/map`.
+
+## Development Setup
+
+```bash
+composer install
+```
+
+## Quality Checklist
+
+Run all checks before opening a PR:
+
+```bash
+vendor/bin/pint --test
+vendor/bin/phpunit
+composer psalm
+```
+
+## Pull Request Rules
+
+- Keep PRs focused on one improvement.
+- Add or update tests for behavior changes.
+- Update docs when public API changes.
+- Preserve backward compatibility unless change is clearly documented.
+
+## Commit Style
+
+Use short imperative commit messages, for example:
+
+- `Add toMany API for explicit collection mapping`
+- `Document Symfony integration example`

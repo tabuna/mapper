@@ -10,6 +10,13 @@ To install, run:
 composer require tabuna/map
 ```
 
+## Documentation
+
+- [Contributing](CONTRIBUTING.md)
+- [Roadmap](ROADMAP.md)
+- [Symfony integration](docs/integrations/symfony.md)
+- [WordPress integration](docs/integrations/wordpress.md)
+
 ### Mapping Data
 
 The core function is `map()`, which accepts source data and returns a mapper instance for further transformation.
@@ -61,6 +68,12 @@ $airports = map($data)
 ```
 
 This returns an `Illuminate\Support\Collection` of objects.
+
+For a more explicit API, use `toMany()`:
+
+```php
+$airports = map($data)->toMany(Airport::class);
+```
 
 ### JSON Input
 

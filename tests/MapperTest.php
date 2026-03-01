@@ -7,6 +7,7 @@ namespace Tabuna\Map\Tests;
 use Illuminate\Container\Container;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use InvalidArgumentException;
 use LogicException;
 use Orchestra\Testbench\TestCase;
 use Tabuna\Map\Mapper;
@@ -66,6 +67,20 @@ class MapperTest extends TestCase
         ];
 
         $mapped = Mapper::map($data)->collection()->to(DummyAirport::class);
+
+        $this->assertInstanceOf(Collection::class, $mapped);
+        $this->assertCount(2, $mapped);
+        $this->assertSame('SVO', $mapped[1]->code);
+    }
+
+    public function testToManyMapsCollectionOfArrays(): void
+    {
+        $data = [
+            ['code' => 'LPK', 'city' => 'Lipetsk'],
+            ['code' => 'SVO', 'city' => 'Moscow'],
+        ];
+
+        $mapped = Mapper::map($data)->toMany(DummyAirport::class);
 
         $this->assertInstanceOf(Collection::class, $mapped);
         $this->assertCount(2, $mapped);
@@ -199,6 +214,20 @@ class MapperTest extends TestCase
         $this->assertIsArray($array);
         $this->assertCount(2, $array);
         $this->assertSame('Moscow', $array[1]['city']);
+    }
+
+    public function testCollectionModeThrowsForNonIterableSourceToObject(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        Mapper::map(42)->collection()->to(DummyAirport::class);
+    }
+
+    public function testCollectionModeThrowsForNonIterableSourceToArray(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        Mapper::map(42)->collection()->toArray();
     }
 
     public function testItConvertsMappedObjectToJson(): void

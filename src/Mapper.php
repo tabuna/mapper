@@ -6,6 +6,7 @@ use Illuminate\Container\Container;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use InvalidArgumentException;
 use LogicException;
 use ReflectionProperty;
 use UnexpectedValueException;
@@ -103,11 +104,23 @@ class Mapper
     public function to(string $targetClass)
     {
         if ($this->isCollection) {
+            $this->assertCollectionSourceIsIterable();
+
             return Collection::make($this->source)
                 ->map(fn ($item) => $this->mapItem($item, $targetClass));
         }
 
         return $this->mapItem($this->source, $targetClass);
+    }
+
+    /**
+     * Map source as collection to target class.
+     *
+     * @param class-string $targetClass
+     */
+    public function toMany(string $targetClass): Collection
+    {
+        return $this->collection()->to($targetClass);
     }
 
     /**
@@ -176,6 +189,8 @@ class Mapper
     public function toArray(): array
     {
         if ($this->isCollection) {
+            $this->assertCollectionSourceIsIterable();
+
             return Collection::make($this->source)
                 ->map(fn ($item) => $this->normalizeAttributes($item))
                 ->toArray();
@@ -225,5 +240,15 @@ class Mapper
         return $property->isPublic()
             && ! $property->isStatic()
             && ! $property->isReadOnly();
+    }
+
+    /**
+     * Ensure collection mode receives iterable source.
+     */
+    protected function assertCollectionSourceIsIterable(): void
+    {
+        if (! is_iterable($this->source)) {
+            throw new InvalidArgumentException('Collection mode expects iterable source data.');
+        }
     }
 }
