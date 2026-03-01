@@ -2,6 +2,9 @@
 
 namespace Tabuna\Map;
 
+use function array_diff;
+use function array_keys;
+
 use Illuminate\Container\Container;
 use Illuminate\Contracts\Container\Container as ContainerContract;
 use Illuminate\Contracts\Support\Arrayable;
@@ -62,6 +65,11 @@ class Mapper
      * Enable automatic snake_case/kebab-case to camelCase key conversion.
      */
     protected bool $snakeToCamel = false;
+
+    /**
+     * Fail mapping when payload contains unknown attributes.
+     */
+    protected bool $strict = false;
 
     /**
      * @param mixed                  $source    The data source to map from.
@@ -211,6 +219,18 @@ class Mapper
     }
 
     /**
+     * Enable strict mode and fail on unknown attributes.
+     *
+     * @return $this
+     */
+    public function strict(bool $enabled = true): self
+    {
+        $this->strict = $enabled;
+
+        return $this;
+    }
+
+    /**
      * Perform mapping to target class or object.
      *
      * @param class-string $targetClass
@@ -251,6 +271,10 @@ class Mapper
     {
         $attributes = $this->normalizeForMapping($item);
         $target = $this->makeTarget($targetClass, $attributes);
+
+        if ($this->strict && $this->mappers === []) {
+            $this->assertNoUnknownAttributes($targetClass, $target, $attributes);
+        }
 
         foreach ($this->mappers as $mapper) {
             $resolver = is_string($mapper)
@@ -534,6 +558,74 @@ class Mapper
         if (! is_iterable($this->source)) {
             throw new InvalidArgumentException('Collection mode expects iterable source data.');
         }
+    }
+
+    /**
+     * Ensure strict mode has no unknown attributes for the target shape.
+     *
+     * @param class-string $targetClass
+     * @param array        $attributes
+     */
+    protected function assertNoUnknownAttributes(string $targetClass, object $target, array $attributes): void
+    {
+        $keys = array_values(array_filter(array_keys($attributes), 'is_string'));
+
+        if ($keys === []) {
+            return;
+        }
+
+        if ($target instanceof Model) {
+            $fillable = $target->getFillable();
+
+            if ($fillable === []) {
+                return;
+            }
+
+            $unknown = array_values(array_diff($keys, $fillable));
+
+            if ($unknown === []) {
+                return;
+            }
+
+            throw new InvalidArgumentException(
+                sprintf(
+                    'Unknown attributes for [%s]: %s',
+                    $targetClass,
+                    implode(', ', $unknown)
+                )
+            );
+        }
+
+        $allowed = [];
+        $reflection = new ReflectionClass($targetClass);
+
+        foreach ($reflection->getProperties() as $property) {
+            if ($this->canAssignProperty($target, $property->getName())) {
+                $allowed[] = $property->getName();
+            }
+        }
+
+        $constructor = $reflection->getConstructor();
+
+        if ($constructor !== null) {
+            foreach ($constructor->getParameters() as $parameter) {
+                $allowed[] = $parameter->getName();
+            }
+        }
+
+        $unknown = array_values(array_diff($keys, array_unique($allowed)));
+
+        if ($unknown === []) {
+            return;
+        }
+
+        throw new InvalidArgumentException(
+            sprintf(
+                'Unknown attributes for [%s]: %s',
+                $targetClass,
+                implode(', ', $unknown)
+            )
+        );
     }
 
     /**

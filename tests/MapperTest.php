@@ -400,6 +400,42 @@ class MapperTest extends TestCase
         $this->assertSame('Saint Petersburg', $mapped->cityName);
     }
 
+    public function testStrictModeThrowsForUnknownAttributes(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unknown attributes');
+
+        Mapper::map([
+            'code'  => 'LPK',
+            'city'  => 'Lipetsk',
+            'extra' => 'unexpected',
+        ])->strict()->to(DummyAirport::class);
+    }
+
+    public function testStrictModeAllowsMappedAttributesAfterRenameAndCaseConversion(): void
+    {
+        $mapped = Mapper::map([
+            'iata_code' => 'LPK',
+            'city_name' => 'Lipetsk',
+        ])->rename([
+            'iata_code' => 'airport_code',
+        ])->snakeToCamelKeys()->strict()->to(DummyAirportCamelReadonlyDto::class);
+
+        $this->assertSame('LPK', $mapped->airportCode);
+        $this->assertSame('Lipetsk', $mapped->cityName);
+    }
+
+    public function testStrictModeThrowsForUnknownEloquentAttributes(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        Mapper::map([
+            'code'  => 'LPK',
+            'city'  => 'Lipetsk',
+            'extra' => 'unexpected',
+        ])->strict()->to(EloquentAirportStub::class);
+    }
+
     public function testToArrayAppliesRenameAndCaseRules(): void
     {
         $array = Mapper::map([

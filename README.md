@@ -107,6 +107,16 @@ $airport = map([
 ])->snakeToCamelKeys()->to(AirportDto::class);
 ```
 
+Enable strict mode to fail fast on unexpected keys:
+
+```php
+map([
+    'code' => 'LPK',
+    'city' => 'Lipetsk',
+    'extra' => 'unexpected',
+])->strict()->to(AirportDto::class); // throws InvalidArgumentException
+```
+
 If you want explicit one-shot PSR wiring, use:
 
 ```php
