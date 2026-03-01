@@ -40,6 +40,7 @@ $dtos = Mapper::intoMany($payloads, AirportDto::class);
 
 ```php
 $dto = Mapper::map($payload)
+    ->only(['iata_code', 'city_name'])
     ->rename(['iata_code' => 'code'])
     ->snakeToCamelKeys()
     ->strict()

@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - `rename([...])` for source-to-target key aliases.
 - `snakeToCamelKeys()` for snake_case/kebab-case payloads.
 - `strict()` mode to fail on unknown attributes.
+- `only([...])` and `except([...])` for payload key filtering.
 - Runtime auto-detection for containers from `$GLOBALS['kernel']` and `$GLOBALS['container']`.
 - Laravel auto-wiring through package service provider.
 - Symfony integration bundle (`TabunaMapBundle`).

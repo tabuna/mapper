@@ -98,6 +98,15 @@ $airport = map(['iata' => 'LPK', 'location' => 'Lipetsk'])
     ->to(AirportDto::class);
 ```
 
+Use `only()` / `except()` to control payload surface before mapping:
+
+```php
+$airport = map($payload)
+    ->only(['iata', 'location'])
+    ->rename(['iata' => 'code', 'location' => 'city'])
+    ->to(AirportDto::class);
+```
+
 Use `snakeToCamelKeys()` for snake_case / kebab-case payloads:
 
 ```php

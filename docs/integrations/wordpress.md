@@ -28,5 +28,5 @@ $airports = map($rows)->toMany(AirportDto::class);
 $airport = map([
     'airport_code' => sanitize_text_field($_POST['airport_code'] ?? ''),
     'city_name' => sanitize_text_field($_POST['city_name'] ?? ''),
-])->snakeToCamelKeys()->strict()->to(AirportDto::class);
+])->except(['legacy_field'])->snakeToCamelKeys()->strict()->to(AirportDto::class);
 ```

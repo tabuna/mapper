@@ -376,6 +376,46 @@ class MapperTest extends TestCase
         $this->assertSame('Lipetsk', $mapped->city);
     }
 
+    public function testOnlyKeepsSelectedAttributes(): void
+    {
+        $mapped = Mapper::map([
+            'code'  => 'LPK',
+            'city'  => 'Lipetsk',
+            'extra' => 'ignore',
+        ])->only(['code', 'city'])->to(DummyAirport::class);
+
+        $this->assertSame('LPK', $mapped->code);
+        $this->assertSame('Lipetsk', $mapped->city);
+    }
+
+    public function testExceptRemovesSelectedAttributes(): void
+    {
+        $array = Mapper::map([
+            'code'  => 'LPK',
+            'city'  => 'Lipetsk',
+            'extra' => 'ignore',
+        ])->except(['extra'])->toArray();
+
+        $this->assertSame([
+            'code' => 'LPK',
+            'city' => 'Lipetsk',
+        ], $array);
+    }
+
+    public function testOnlyAndRenameCanBeComposed(): void
+    {
+        $mapped = Mapper::map([
+            'iata' => 'LPK',
+            'city' => 'Lipetsk',
+            'name' => 'unused',
+        ])->only(['iata', 'city'])->rename([
+            'iata' => 'code',
+        ])->to(DummyAirport::class);
+
+        $this->assertSame('LPK', $mapped->code);
+        $this->assertSame('Lipetsk', $mapped->city);
+    }
+
     public function testItConvertsSnakeCaseKeysToCamelCaseForProperties(): void
     {
         $mapped = Mapper::map([

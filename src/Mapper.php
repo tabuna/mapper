@@ -67,6 +67,20 @@ class Mapper
     protected bool $snakeToCamel = false;
 
     /**
+     * Keep only selected source keys.
+     *
+     * @var array<int, string>|null
+     */
+    protected ?array $onlyKeys = null;
+
+    /**
+     * Exclude selected source keys.
+     *
+     * @var array<int, string>
+     */
+    protected array $exceptKeys = [];
+
+    /**
      * Fail mapping when payload contains unknown attributes.
      */
     protected bool $strict = false;
@@ -226,6 +240,34 @@ class Mapper
     public function strict(bool $enabled = true): self
     {
         $this->strict = $enabled;
+
+        return $this;
+    }
+
+    /**
+     * Keep only selected source keys before mapping.
+     *
+     * @param array<int, string> $keys
+     *
+     * @return $this
+     */
+    public function only(array $keys): self
+    {
+        $this->onlyKeys = $keys;
+
+        return $this;
+    }
+
+    /**
+     * Exclude selected source keys before mapping.
+     *
+     * @param array<int, string> $keys
+     *
+     * @return $this
+     */
+    public function except(array $keys): self
+    {
+        $this->exceptKeys = [...$this->exceptKeys, ...$keys];
 
         return $this;
     }
@@ -448,6 +490,16 @@ class Mapper
      */
     protected function applyAttributeRules(array $attributes): array
     {
+        if ($this->onlyKeys !== null) {
+            $attributes = array_intersect_key($attributes, array_flip($this->onlyKeys));
+        }
+
+        if ($this->exceptKeys !== []) {
+            foreach ($this->exceptKeys as $key) {
+                unset($attributes[$key]);
+            }
+        }
+
         if ($this->attributeRenames !== []) {
             $renamed = [];
 
