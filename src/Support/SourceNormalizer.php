@@ -3,10 +3,32 @@
 namespace Tabuna\Map\Support;
 
 use Illuminate\Contracts\Support\Arrayable;
-use Throwable;
+use Tabuna\Map\Support\Source\Contracts\ObjectPayloadExtractor;
+use Tabuna\Map\Support\Source\Extractors\HttpClientResponseExtractor;
+use Tabuna\Map\Support\Source\Extractors\MethodPayloadExtractor;
+use Tabuna\Map\Support\Source\Extractors\PropertyBagPayloadExtractor;
+use Tabuna\Map\Support\Source\Extractors\ValidatedPayloadExtractor;
 
 class SourceNormalizer
 {
+    /**
+     * @var array<int, ObjectPayloadExtractor>
+     */
+    protected array $objectExtractors;
+
+    /**
+     * @param array<int, ObjectPayloadExtractor>|null $objectExtractors
+     */
+    public function __construct(?array $objectExtractors = null)
+    {
+        $this->objectExtractors = $objectExtractors ?? [
+            new ValidatedPayloadExtractor(),
+            new MethodPayloadExtractor(['all', 'toArray', 'get_params', 'getParsedBody']),
+            new PropertyBagPayloadExtractor(['request', 'query', 'attributes']),
+            new HttpClientResponseExtractor(),
+        ];
+    }
+
     /**
      * Normalize top-level source before mapping starts.
      */
@@ -41,35 +63,8 @@ class SourceNormalizer
      */
     public function normalizeObjectAttributes(object $item): array
     {
-        $validated = $this->extractValidatedAttributes($item);
-
-        if (is_array($validated)) {
-            return $validated;
-        }
-
-        $extractors = [
-            'all',
-            'toArray',
-            'get_params',
-            'getParsedBody',
-        ];
-
-        foreach ($extractors as $method) {
-            $attributes = $this->extractAttributesFromMethod($item, $method);
-
-            if (is_array($attributes)) {
-                return $attributes;
-            }
-        }
-
-        $bags = [
-            'request',
-            'query',
-            'attributes',
-        ];
-
-        foreach ($bags as $bag) {
-            $attributes = $this->extractAttributesFromPropertyBag($item, $bag);
+        foreach ($this->objectExtractors as $extractor) {
+            $attributes = $extractor->extract($item);
 
             if (is_array($attributes)) {
                 return $attributes;
@@ -84,33 +79,7 @@ class SourceNormalizer
      */
     public function extractValidatedAttributes(object $item): ?array
     {
-        $validated = $this->extractAttributesFromMethod($item, 'validated');
-
-        if (is_array($validated)) {
-            return $validated;
-        }
-
-        if (! method_exists($item, 'safe')) {
-            return null;
-        }
-
-        try {
-            $safe = $item->safe();
-        } catch (Throwable) {
-            return null;
-        }
-
-        if (! is_object($safe) || ! method_exists($safe, 'all')) {
-            return null;
-        }
-
-        try {
-            $attributes = $safe->all();
-        } catch (Throwable) {
-            return null;
-        }
-
-        return is_array($attributes) ? $attributes : null;
+        return (new ValidatedPayloadExtractor())->extract($item);
     }
 
     /**
@@ -118,17 +87,7 @@ class SourceNormalizer
      */
     public function extractAttributesFromMethod(object $item, string $method): ?array
     {
-        if (! method_exists($item, $method)) {
-            return null;
-        }
-
-        try {
-            $resolved = $item->$method();
-        } catch (Throwable) {
-            return null;
-        }
-
-        return is_array($resolved) ? $resolved : null;
+        return (new MethodPayloadExtractor([$method]))->extract($item);
     }
 
     /**
@@ -136,26 +95,6 @@ class SourceNormalizer
      */
     public function extractAttributesFromPropertyBag(object $item, string $property): ?array
     {
-        if (! property_exists($item, $property)) {
-            return null;
-        }
-
-        try {
-            $bag = $item->$property;
-        } catch (Throwable) {
-            return null;
-        }
-
-        if (! is_object($bag) || ! method_exists($bag, 'all')) {
-            return null;
-        }
-
-        try {
-            $attributes = $bag->all();
-        } catch (Throwable) {
-            return null;
-        }
-
-        return is_array($attributes) ? $attributes : null;
+        return (new PropertyBagPayloadExtractor([$property]))->extract($item);
     }
 }

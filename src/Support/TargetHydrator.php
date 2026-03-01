@@ -11,10 +11,10 @@ use ReflectionProperty;
 
 class TargetHydrator
 {
-    /**
-     * Optional Eloquent base model class used when Illuminate database package is installed.
-     */
-    protected const ELOQUENT_MODEL_CLASS = 'Illuminate\\Database\\Eloquent\\Model';
+    public function __construct(protected ?EloquentModelSupport $eloquent = null)
+    {
+        $this->eloquent ??= new EloquentModelSupport();
+    }
 
     /**
      * Fill the target object with data from the item.
@@ -26,8 +26,10 @@ class TargetHydrator
      */
     public function fill(object $target, array $attributes): object
     {
-        if ($this->isEloquentModel($target)) {
-            return $target->fill($attributes);
+        $filled = $this->eloquent->fill($target, $attributes);
+
+        if (is_object($filled)) {
+            return $filled;
         }
 
         foreach ($attributes as $key => $value) {
@@ -53,26 +55,8 @@ class TargetHydrator
             return;
         }
 
-        if ($this->isEloquentModel($target)) {
-            $fillable = $target->getFillable();
-
-            if ($fillable === []) {
-                return;
-            }
-
-            $unknown = array_values(array_diff($keys, $fillable));
-
-            if ($unknown === []) {
-                return;
-            }
-
-            throw new InvalidArgumentException(
-                sprintf(
-                    'Unknown attributes for [%s]: %s',
-                    $targetClass,
-                    implode(', ', $unknown)
-                )
-            );
+        if ($this->eloquent->validateStrictAttributes($targetClass, $target, $attributes)) {
+            return;
         }
 
         $allowed = [];
@@ -128,9 +112,6 @@ class TargetHydrator
      */
     public function isEloquentModel(object $target): bool
     {
-        $modelClass = self::ELOQUENT_MODEL_CLASS;
-
-        return class_exists($modelClass)
-            && $target instanceof $modelClass;
+        return $this->eloquent->isEloquentModel($target);
     }
 }

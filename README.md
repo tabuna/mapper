@@ -24,6 +24,7 @@ composer require tabuna/map
 - [Changelog](CHANGELOG.md)
 - [Why tabuna/map](docs/comparison/why-tabuna-map.md)
 - [Laravel integration](docs/integrations/laravel.md)
+- [HTTP clients integration](docs/integrations/http-clients.md)
 - [Symfony integration](docs/integrations/symfony.md)
 - [WordPress integration](docs/integrations/wordpress.md)
 - [Benchmarks](benchmarks/README.md)
@@ -43,10 +44,11 @@ The public API stays minimal (`map()->to()`) while internals are separated by re
 
 - `Support/ContainerResolver`: global + auto-detected container resolution.
 - `Support/FrameworkContainerDetector`: isolated Laravel/Symfony/global runtime detection.
-- `Support/SourceNormalizer`: request/object/JSON payload normalization.
+- `Support/SourceNormalizer`: request/object/JSON payload normalization via pluggable source extractors.
 - `Support/AttributeRules`: `path`, `only`, `except`, `rename`, camel-case transforms.
 - `Support/TargetFactory`: constructor-aware target instantiation.
 - `Support/TargetHydrator`: filling + strict unknown-attribute validation.
+- `Support/EloquentModelSupport`: isolated Eloquent-specific behavior.
 - `Support/helpers.php`: only `map()` helper, no framework-specific runtime logic.
 
 ## Framework Auto Integration
@@ -61,6 +63,7 @@ The core function is `map()`, which accepts source data and returns a mapper ins
 It works directly with arrays, JSON, Laravel/Symfony request objects, WP REST requests, and PSR-7 parsed-body requests.
 For Laravel `FormRequest`, it prefers `validated()` (or `safe()->all()`) over raw `all()`.
 For Symfony requests, it can read request/query bags without manual extraction.
+For Laravel HTTP / Guzzle responses, mapper can read `json()`, `body()`, and `getBody()` payloads directly.
 
 ```php
 use App\Http\Requests\StoreAirportRequest;

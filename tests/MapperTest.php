@@ -247,6 +247,68 @@ class MapperTest extends TestCase
         $this->assertSame('New York', $mapped->city);
     }
 
+    public function testItMapsObjectUsingLaravelHttpJsonMethod(): void
+    {
+        $responseLike = new class
+        {
+            public function json(): array
+            {
+                return ['code' => 'LAX', 'city' => 'Los Angeles'];
+            }
+        };
+
+        $mapped = Mapper::map($responseLike)->to(DummyAirport::class);
+
+        $this->assertSame('LAX', $mapped->code);
+        $this->assertSame('Los Angeles', $mapped->city);
+    }
+
+    public function testItMapsObjectUsingLaravelHttpBodyMethod(): void
+    {
+        $responseLike = new class
+        {
+            public function body(): string
+            {
+                return '{"code":"HND","city":"Tokyo"}';
+            }
+        };
+
+        $mapped = Mapper::map($responseLike)->to(DummyAirport::class);
+
+        $this->assertSame('HND', $mapped->code);
+        $this->assertSame('Tokyo', $mapped->city);
+    }
+
+    public function testItMapsObjectUsingGuzzleLikeBodyStream(): void
+    {
+        $responseLike = new class
+        {
+            public function getBody(): object
+            {
+                return new class
+                {
+                    public function __toString(): string
+                    {
+                        return '{"code":"BKK","city":"Bangkok"}';
+                    }
+                };
+            }
+        };
+
+        $mapped = Mapper::map($responseLike)->to(DummyAirport::class);
+
+        $this->assertSame('BKK', $mapped->code);
+        $this->assertSame('Bangkok', $mapped->city);
+    }
+
+    public function testItMapsCurlExecJsonStringSource(): void
+    {
+        $mapped = Mapper::map('{"code":"DXB","city":"Dubai"}')->to(DummyAirport::class);
+
+        $this->assertSame('DXB', $mapped->code);
+        $this->assertSame('Dubai', $mapped->city);
+    }
+
     public function testItMapsObjectUsingRequestPropertyBagWhenAvailable(): void
     {
         $requestLike = new class

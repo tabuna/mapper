@@ -35,8 +35,10 @@ All notable changes to this project will be documented in this file.
 - Improved source normalization: request-like objects are mapped directly via `all()`, `get_params()`, or `getParsedBody()`.
 - Added Laravel FormRequest-aware source normalization: `validated()` / `safe()->all()` now has priority over raw `all()`.
 - Added Symfony request bag normalization (`$request->request->all()` / query bag) for zero-config mapping.
+- Added HTTP client response normalization for Laravel HTTP (`json()` / `body()`) and Guzzle/PSR-7 (`getBody()`).
 - Reduced hard framework coupling: `illuminate/http` and `illuminate/database` are now optional dependencies.
 - Refactored internals: `Mapper` now delegates to dedicated support components (container, normalization, rules, factory, hydrator).
 - Moved framework runtime probing into dedicated `FrameworkContainerDetector`.
+- Moved Eloquent-specific behavior into dedicated `EloquentModelSupport`.
 - Removed `map_into(...)` and `map_into_many(...)` to keep API surface minimal.
 - Added constructor-argument mapping for immutable/readonly DTOs.
