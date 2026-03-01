@@ -19,6 +19,7 @@ use Tabuna\Map\Tests\Dummy\DummyAirportWithPrivateCode;
 use Tabuna\Map\Tests\Dummy\DummyWithContainer;
 use Tabuna\Map\Tests\Dummy\EloquentAirportStub;
 use Tabuna\Map\Tests\Dummy\InvalidMapperStub;
+use Tabuna\Map\Tests\Dummy\KernelWithContainerStub;
 use Tabuna\Map\Tests\Dummy\SimplePsrContainer;
 use UnexpectedValueException;
 
@@ -26,6 +27,7 @@ class MapperTest extends TestCase
 {
     protected function tearDown(): void
     {
+        unset($GLOBALS['container'], $GLOBALS['kernel']);
         Mapper::resetContainer();
 
         parent::tearDown();
@@ -417,6 +419,16 @@ class MapperTest extends TestCase
         $this->assertSame('Lipetsk', $mapped->city);
     }
 
+    public function testItCanMapUsingExplicitPsrContainer(): void
+    {
+        $mapped = Mapper::mapUsingPsrContainer(['city' => 'Lipetsk'], new SimplePsrContainer([
+            DummyAirport::class => new DummyAirportWithPrivateCode(),
+        ]))->to(DummyAirport::class);
+
+        $this->assertInstanceOf(DummyAirportWithPrivateCode::class, $mapped);
+        $this->assertSame('Lipetsk', $mapped->city);
+    }
+
     public function testItCanUseGlobalIlluminateContainerWithoutPassingItEveryTime(): void
     {
         $container = new Container();
@@ -454,5 +466,29 @@ class MapperTest extends TestCase
 
         $this->assertInstanceOf(DummyAirport::class, $mapped);
         $this->assertSame('LPK', $mapped->code);
+    }
+
+    public function testItAutoDetectsContainerFromGlobalKernelWithoutManualSetup(): void
+    {
+        $GLOBALS['kernel'] = new KernelWithContainerStub(new SimplePsrContainer([
+            DummyAirport::class => new DummyAirportWithPrivateCode(),
+        ]));
+
+        $mapped = Mapper::map(['city' => 'Lipetsk'])->to(DummyAirport::class);
+
+        $this->assertInstanceOf(DummyAirportWithPrivateCode::class, $mapped);
+        $this->assertSame('Lipetsk', $mapped->city);
+    }
+
+    public function testItAutoDetectsContainerFromGlobalContainerVariableWithoutManualSetup(): void
+    {
+        $GLOBALS['container'] = new SimplePsrContainer([
+            DummyAirport::class => new DummyAirportWithPrivateCode(),
+        ]);
+
+        $mapped = Mapper::map(['city' => 'Lipetsk'])->to(DummyAirport::class);
+
+        $this->assertInstanceOf(DummyAirportWithPrivateCode::class, $mapped);
+        $this->assertSame('Lipetsk', $mapped->city);
     }
 }

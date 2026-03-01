@@ -24,7 +24,8 @@
         "illuminate/container": "^9.0|^10.0|^11.0|^12.0",
         "illuminate/contracts": "^9.0|^10.0|^11.0|^12.0",
         "illuminate/database": "^9.0|^10.0|^11.0|^12.0",
-        "illuminate/http": "^9.0|^10.0|^11.0|^12.0"
+        "illuminate/http": "^9.0|^10.0|^11.0|^12.0",
+        "psr/container": "^1.1|^2.0"
     },
     "conflict": {
         "orchestra/testbench-core": "<6.24.1"
@@ -51,6 +52,13 @@
         "psalm": "vendor/bin/psalm",
         "test": "./vendor/bin/testbench package:test --no-coverage",
         "test-coverage": "vendor/bin/phpunit --coverage-html coverage"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Tabuna\\Map\\Laravel\\MapServiceProvider"
+            ]
+        }
     },
     "config": {
         "sort-packages": true

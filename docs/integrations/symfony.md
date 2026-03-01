@@ -1,22 +1,17 @@
 # Symfony Integration
 
-`tabuna/map` can use the Symfony PSR-11 container directly.
+`tabuna/map` can use Symfony container automatically.
 
-## Bootstrap Once
+## Register Bundle Once
 
 ```php
 <?php
 
-use Symfony\Component\DependencyInjection\ContainerInterface;
-use Tabuna\Map\Mapper;
-
-final class MapperBootstrap
-{
-    public function __construct(ContainerInterface $container)
-    {
-        Mapper::usePsrContainer($container);
-    }
-}
+// config/bundles.php
+return [
+    // ...
+    Tabuna\Map\Symfony\TabunaMapBundle::class => ['all' => true],
+];
 ```
 
 ## Use Anywhere (No Per-Call Container)
@@ -39,4 +34,12 @@ final class ImportAirportHandler
 
 ```php
 $dtos = Mapper::intoMany($payloads, AirportDto::class);
+```
+
+## Optional Explicit API
+
+If you don't use bundle registration, you can still map in one call:
+
+```php
+$dto = Mapper::mapUsingPsrContainer($payload, $container)->to(AirportDto::class);
 ```

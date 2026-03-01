@@ -3,6 +3,7 @@
 namespace Tabuna\Map;
 
 use Illuminate\Container\Container;
+use Illuminate\Contracts\Container\Container as ContainerContract;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
@@ -11,6 +12,8 @@ use LogicException;
 use Psr\Container\ContainerInterface;
 use ReflectionProperty;
 use Tabuna\Map\Support\PsrContainerAdapter;
+use Tabuna\Map\Support\SymfonyContainerAdapter;
+use Throwable;
 use UnexpectedValueException;
 
 class Mapper
@@ -18,7 +21,12 @@ class Mapper
     /**
      * Global configured container used by default for all mapper instances.
      */
-    protected static ?Container $globalContainer = null;
+    protected static ?ContainerContract $globalContainer = null;
+
+    /**
+     * Auto-detected runtime container cached for subsequent mapper instances.
+     */
+    protected static ?ContainerContract $autoDetectedContainer = null;
 
     /**
      * The source data to be mapped. Can be an object, array, or collection.
@@ -33,7 +41,7 @@ class Mapper
     /**
      * The IoC container used to resolve mappers and target classes.
      */
-    protected Container $container;
+    protected ContainerContract $container;
 
     /**
      * @var array<int, callable|class-string>
@@ -41,13 +49,14 @@ class Mapper
     protected array $mappers = [];
 
     /**
-     * @param mixed          $source    The data source to map from.
-     * @param Container|null $container Optional dependency container.
+     * @param mixed                  $source    The data source to map from.
+     * @param ContainerContract|null $container Optional dependency container.
      */
-    public function __construct(mixed $source, ?Container $container = null)
+    public function __construct(mixed $source, ?ContainerContract $container = null)
     {
         $this->container = $container
             ?? self::$globalContainer
+            ?? self::resolveAutoDetectedContainer()
             ?? Container::getInstance();
 
         $this->source = match (true) {
@@ -94,15 +103,23 @@ class Mapper
     /**
      * Create a new Mapper instance with an explicit container.
      */
-    public static function mapUsingContainer(mixed $source, Container $container): self
+    public static function mapUsingContainer(mixed $source, ContainerContract $container): self
     {
         return new self($source, $container);
     }
 
     /**
+     * Create a new Mapper instance with an explicit PSR-11 container.
+     */
+    public static function mapUsingPsrContainer(mixed $source, ContainerInterface $container): self
+    {
+        return new self($source, new PsrContainerAdapter($container));
+    }
+
+    /**
      * Configure global Illuminate container for all future map() calls.
      */
-    public static function useContainer(Container $container): void
+    public static function useContainer(ContainerContract $container): void
     {
         self::$globalContainer = $container;
     }
@@ -121,6 +138,7 @@ class Mapper
     public static function resetContainer(): void
     {
         self::$globalContainer = null;
+        self::$autoDetectedContainer = null;
     }
 
     /**
@@ -305,5 +323,95 @@ class Mapper
         if (! is_iterable($this->source)) {
             throw new InvalidArgumentException('Collection mode expects iterable source data.');
         }
+    }
+
+    /**
+     * Resolve and cache a runtime container from supported framework environments.
+     */
+    protected static function resolveAutoDetectedContainer(): ?ContainerContract
+    {
+        if (self::$autoDetectedContainer instanceof ContainerContract) {
+            return self::$autoDetectedContainer;
+        }
+
+        $candidates = [
+            self::detectGlobalContainerVariable(),
+            self::detectSymfonyKernelContainer(),
+            self::detectLaravelContainer(),
+        ];
+
+        foreach ($candidates as $candidate) {
+            $resolved = self::normalizeContainerCandidate($candidate);
+
+            if ($resolved instanceof ContainerContract) {
+                self::$autoDetectedContainer = $resolved;
+
+                return self::$autoDetectedContainer;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Normalize mixed container candidate into Illuminate container.
+     */
+    protected static function normalizeContainerCandidate(mixed $candidate): ?ContainerContract
+    {
+        if ($candidate instanceof ContainerContract) {
+            return $candidate;
+        }
+
+        if ($candidate instanceof ContainerInterface) {
+            return new PsrContainerAdapter($candidate);
+        }
+
+        if (is_object($candidate) && method_exists($candidate, 'get') && method_exists($candidate, 'has')) {
+            return new PsrContainerAdapter(new SymfonyContainerAdapter($candidate));
+        }
+
+        return null;
+    }
+
+    /**
+     * Detect Laravel container from helper runtime.
+     */
+    protected static function detectLaravelContainer(): mixed
+    {
+        if (! function_exists('app')) {
+            return null;
+        }
+
+        try {
+            return app();
+        } catch (Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * Detect Symfony container exposed by global kernel instance.
+     */
+    protected static function detectSymfonyKernelContainer(): mixed
+    {
+        $kernel = $GLOBALS['kernel'] ?? null;
+
+        if (! is_object($kernel) || ! method_exists($kernel, 'getContainer')) {
+            return null;
+        }
+
+        try {
+            return $kernel->getContainer();
+        } catch (Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * Detect generic global container variable (for simple bootstrap setups).
+     */
+    protected static function detectGlobalContainerVariable(): mixed
+    {
+        return $GLOBALS['container'] ?? null;
     }
 }

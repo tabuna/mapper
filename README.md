@@ -26,6 +26,12 @@ composer require tabuna/map
 - Extensible via custom mappers only when you need special behavior.
 - Designed with strict quality gates for predictable upgrades.
 
+## Framework Auto Integration
+
+- Laravel: container is wired automatically via package discovery.
+- Symfony: use `Tabuna\Map\Symfony\TabunaMapBundle` once, then `map()->to` works everywhere.
+- Custom runtimes: Mapper can auto-detect `$GLOBALS['kernel']` or `$GLOBALS['container']` when they expose a PSR-11 container.
+
 ### Mapping Data
 
 The core function is `map()`, which accepts source data and returns a mapper instance for further transformation.
@@ -64,18 +70,19 @@ $airports = map_into_many($rows, Airport::class);
 The `to()` method creates a new instance of the target class and populates it with mapped data.
 Only writable public properties are assigned for plain PHP objects (private, protected, static, and readonly properties are skipped).
 
-If your framework has its own container, configure it once at bootstrap time:
+If you want explicit one-shot PSR wiring, use:
 
 ```php
 use Tabuna\Map\Mapper;
 
-Mapper::usePsrContainer($symfonyContainer); // once during bootstrap
+Mapper::mapUsingPsrContainer($payload, $symfonyContainer)
+    ->to(AirportDto::class);
 ```
 
-After that, your mapping calls stay minimal:
+If your framework has its own container and you need explicit global setup:
 
 ```php
-$airport = map($data)->to(AirportDto::class);
+Mapper::usePsrContainer($symfonyContainer); // once during bootstrap
 ```
 
 For one-off custom resolution (without global setup), use an explicit container:
