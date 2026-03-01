@@ -6,6 +6,7 @@ use Illuminate\Container\Container;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use ReflectionProperty;
 
 class Mapper
 {
@@ -33,7 +34,7 @@ class Mapper
         $this->container = $container ?? Container::getInstance();
 
         $this->source = match (true) {
-            $source instanceof Arrayable => $source->all(),
+            $source instanceof Arrayable => $source->toArray(),
             is_string($source)           => json_decode($source, true, 512, JSON_THROW_ON_ERROR),
             default                      => $source,
         };
@@ -119,16 +120,14 @@ class Mapper
      */
     protected function fill(object $target, mixed $item): object
     {
-        $attributes = is_array($item)
-            ? $item
-            : (array) $item;
+        $attributes = $this->normalizeAttributes($item);
 
         if ($target instanceof Model) {
             return $target->fill($attributes);
         }
 
         foreach ($attributes as $key => $value) {
-            if (property_exists($target, $key)) {
+            if ($this->canAssignProperty($target, $key)) {
                 $target->$key = $value;
             }
         }
@@ -145,11 +144,11 @@ class Mapper
     {
         if ($this->isCollection) {
             return collect($this->source)
-                ->map(fn ($item) => is_array($item) ? $item : (array) $item)
+                ->map(fn ($item) => $this->normalizeAttributes($item))
                 ->toArray();
         }
 
-        return is_array($this->source) ? $this->source : (array) $this->source;
+        return $this->normalizeAttributes($this->source);
     }
 
     /**
@@ -160,5 +159,38 @@ class Mapper
     public function toJson(): string
     {
         return json_encode($this->toArray(), JSON_THROW_ON_ERROR);
+    }
+
+    /**
+     * Normalize any supported source item to an array of attributes.
+     *
+     * @param mixed $item
+     *
+     * @return array
+     */
+    protected function normalizeAttributes(mixed $item): array
+    {
+        return match (true) {
+            is_array($item)            => $item,
+            $item instanceof Arrayable => $item->toArray(),
+            is_object($item)           => get_object_vars($item),
+            default                    => (array) $item,
+        };
+    }
+
+    /**
+     * Determine if a property can be assigned on the target object.
+     */
+    protected function canAssignProperty(object $target, string $key): bool
+    {
+        if (! property_exists($target, $key)) {
+            return false;
+        }
+
+        $property = new ReflectionProperty($target, $key);
+
+        return $property->isPublic()
+            && ! $property->isStatic()
+            && ! $property->isReadOnly();
     }
 }

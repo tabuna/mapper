@@ -4,10 +4,10 @@ A simple and elegant object mapper for Laravel.
 It makes mapping arrays, requests, and collections into Eloquent models or any classes easy and convenient.
 
 
-To install, you need to run the following command in your Laravel project:
+To install, run:
 
 ```shell
-composer require ...
+composer require tabuna/map
 ```
 
 ### Mapping Data
@@ -32,6 +32,7 @@ class AirportController extends Controller
 ```
 
 The `to()` method creates a new instance of the target class and populates it with mapped data.
+Only writable public properties are assigned for plain PHP objects (private, protected, static, and readonly properties are skipped).
 
 ### Mapping Collections
 
@@ -94,3 +95,5 @@ Any object created through the Mapper can be easily converted to an array or JSO
 $array = map($airport)->toArray();
 $json = map($airport)->toJson();
 ```
+
+`toArray()` serializes public object properties and supports arrays / `Arrayable` sources.

@@ -18,6 +18,7 @@
         <MissingTemplateParam errorLevel="suppress" />
         <InvalidTemplateParam errorLevel="suppress" />
         <MissingOverrideAttribute errorLevel="suppress" />
+        <PossiblyUnusedMethod errorLevel="suppress" />
         <UndefinedThisPropertyFetch errorLevel="suppress" />
     </issueHandlers>
 </psalm>

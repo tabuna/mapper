@@ -11,7 +11,8 @@ use Tabuna\Map\Mapper;
 use Tabuna\Map\Tests\Dummy\CustomMapperStub;
 use Tabuna\Map\Tests\Dummy\DummyAirport;
 use Tabuna\Map\Tests\Dummy\DummyAirportHook;
-use Tabuna\Map\Tests\Dummy\DummyAirportSetter;
+use Tabuna\Map\Tests\Dummy\DummyAirportPublicPrivateSource;
+use Tabuna\Map\Tests\Dummy\DummyAirportWithPrivateCode;
 use Tabuna\Map\Tests\Dummy\DummyWithContainer;
 use Tabuna\Map\Tests\Dummy\EloquentAirportStub;
 
@@ -218,7 +219,6 @@ class MapperTest extends TestCase
         $this->assertInstanceOf(DummyAirport::class, $mapped->first());
     }
 
-
     public function testItMapsWithContainerProperties(): void
     {
         $data = ['code' => 'LPK', 'city' => 'Lipetsk'];
@@ -271,5 +271,26 @@ class MapperTest extends TestCase
         $invalidJson = '{"code": "LPK", "city": "Lipetsk"';
 
         Mapper::map($invalidJson)->toArray();
+    }
+
+    public function testItSkipsPrivateTargetPropertiesWithoutFailing(): void
+    {
+        $data = ['code' => 'LPK', 'city' => 'Lipetsk'];
+
+        $mapped = Mapper::map($data)->to(DummyAirportWithPrivateCode::class);
+
+        $this->assertInstanceOf(DummyAirportWithPrivateCode::class, $mapped);
+        $this->assertSame('initial', $mapped->code());
+        $this->assertSame('Lipetsk', $mapped->city);
+    }
+
+    public function testToArrayDoesNotExposePrivateSourceProperties(): void
+    {
+        $source = new DummyAirportPublicPrivateSource('LPK', 'hidden');
+
+        $array = Mapper::map($source)->toArray();
+
+        $this->assertSame(['code' => 'LPK'], $array);
+        $this->assertArrayNotHasKey('secret', $array);
     }
 }
