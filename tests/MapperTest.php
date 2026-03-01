@@ -499,6 +499,34 @@ class MapperTest extends TestCase
         $this->assertSame('Lipetsk', $mapped->city);
     }
 
+    public function testPathExtractsNestedPayloadBeforeMapping(): void
+    {
+        $mapped = Mapper::map([
+            'data' => [
+                'attributes' => [
+                    'code' => 'LPK',
+                    'city' => 'Lipetsk',
+                ],
+            ],
+        ])->path('data.attributes')->to(DummyAirport::class);
+
+        $this->assertSame('LPK', $mapped->code);
+        $this->assertSame('Lipetsk', $mapped->city);
+    }
+
+    public function testPathReturnsEmptyPayloadWhenPathDoesNotExist(): void
+    {
+        $mapped = Mapper::map([
+            'data' => [
+                'attributes' => [
+                    'code' => 'LPK',
+                ],
+            ],
+        ])->path('data.missing')->toArray();
+
+        $this->assertSame([], $mapped);
+    }
+
     public function testItConvertsSnakeCaseKeysToCamelCaseForProperties(): void
     {
         $mapped = Mapper::map([

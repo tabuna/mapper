@@ -109,6 +109,14 @@ $airport = map($payload)
     ->to(AirportDto::class);
 ```
 
+Use `path()` for nested API envelopes:
+
+```php
+$airport = map($payload)
+    ->path('data.attributes')
+    ->to(AirportDto::class);
+```
+
 Use `snakeToCamelKeys()` for snake_case / kebab-case payloads:
 
 ```php

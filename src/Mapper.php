@@ -85,6 +85,11 @@ class Mapper
     protected array $exceptKeys = [];
 
     /**
+     * Optional dot-notated path to nested source payload.
+     */
+    protected ?string $sourcePath = null;
+
+    /**
      * Fail mapping when payload contains unknown attributes.
      */
     protected bool $strict = false;
@@ -272,6 +277,18 @@ class Mapper
     public function except(array $keys): self
     {
         $this->exceptKeys = [...$this->exceptKeys, ...$keys];
+
+        return $this;
+    }
+
+    /**
+     * Select nested payload path before mapping (dot notation).
+     *
+     * @return $this
+     */
+    public function path(string $path): self
+    {
+        $this->sourcePath = trim($path);
 
         return $this;
     }
@@ -523,7 +540,40 @@ class Mapper
      */
     protected function normalizeForMapping(mixed $item): array
     {
-        return $this->applyAttributeRules($this->normalizeAttributes($item));
+        $attributes = $this->normalizeAttributes($item);
+
+        if ($this->sourcePath !== null && $this->sourcePath !== '') {
+            $attributes = $this->extractPathAttributes($attributes, $this->sourcePath);
+        }
+
+        return $this->applyAttributeRules($attributes);
+    }
+
+    /**
+     * Resolve dot-notated path from normalized attributes.
+     *
+     * @param array  $attributes
+     * @param string $path
+     *
+     * @return array
+     */
+    protected function extractPathAttributes(array $attributes, string $path): array
+    {
+        $resolved = $attributes;
+
+        foreach (explode('.', $path) as $segment) {
+            if ($segment === '') {
+                continue;
+            }
+
+            if (! is_array($resolved) || ! array_key_exists($segment, $resolved)) {
+                return [];
+            }
+
+            $resolved = $resolved[$segment];
+        }
+
+        return is_array($resolved) ? $resolved : [];
     }
 
     /**

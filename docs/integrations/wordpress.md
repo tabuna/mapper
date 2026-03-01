@@ -23,8 +23,10 @@ $airports = map($rows)->toMany(AirportDto::class);
 ## Mapping Different Key Formats
 
 ```php
-$airport = map([
-    'airport_code' => sanitize_text_field($_POST['airport_code'] ?? ''),
-    'city_name' => sanitize_text_field($_POST['city_name'] ?? ''),
-])->except(['legacy_field'])->snakeToCamelKeys()->strict()->to(AirportDto::class);
+$airport = map($request)
+    ->path('airport')
+    ->except(['legacy_field'])
+    ->snakeToCamelKeys()
+    ->strict()
+    ->to(AirportDto::class);
 ```
