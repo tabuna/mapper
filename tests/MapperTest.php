@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Tabuna\Map\Tests;
 
+use GuzzleHttp\Psr7\Response as Psr7Response;
 use Illuminate\Container\Container;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Client\Response as LaravelHttpResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use InvalidArgumentException;
@@ -287,13 +289,9 @@ class MapperTest extends TestCase
 
     public function testItMapsObjectUsingLaravelHttpJsonMethod(): void
     {
-        $responseLike = new class
-        {
-            public function json(): array
-            {
-                return ['code' => 'LAX', 'city' => 'Los Angeles'];
-            }
-        };
+        $responseLike = new LaravelHttpResponse(
+            new Psr7Response(200, ['Content-Type' => 'application/json'], '{"code":"LAX","city":"Los Angeles"}')
+        );
 
         $mapped = Mapper::map($responseLike)->to(DummyAirport::class);
 
@@ -303,9 +301,14 @@ class MapperTest extends TestCase
 
     public function testItMapsObjectUsingLaravelHttpBodyMethod(): void
     {
-        $responseLike = new class
+        $responseLike = new class(new Psr7Response(200, [], '{}')) extends LaravelHttpResponse
         {
-            public function body(): string
+            public function json($key = null, $default = null, $flags = null)
+            {
+                return null;
+            }
+
+            public function body()
             {
                 return '{"code":"HND","city":"Tokyo"}';
             }
@@ -319,19 +322,7 @@ class MapperTest extends TestCase
 
     public function testItMapsObjectUsingGuzzleLikeBodyStream(): void
     {
-        $responseLike = new class
-        {
-            public function getBody(): object
-            {
-                return new class
-                {
-                    public function __toString(): string
-                    {
-                        return '{"code":"BKK","city":"Bangkok"}';
-                    }
-                };
-            }
-        };
+        $responseLike = new Psr7Response(200, ['Content-Type' => 'application/json'], '{"code":"BKK","city":"Bangkok"}');
 
         $mapped = Mapper::map($responseLike)->to(DummyAirport::class);
 

@@ -63,7 +63,7 @@ The core function is `map()`, which accepts source data and returns a mapper ins
 It works directly with arrays, JSON, Laravel/Symfony request objects, WP REST requests, and PSR-7 parsed-body requests.
 For supported Laravel request sources (`Illuminate\Foundation\Http\FormRequest`), it prefers `validated()` (or `safe()->all()`) over raw `all()`.
 For Symfony requests, it can read request/query bags without manual extraction.
-For Laravel HTTP / Guzzle responses, mapper can read `json()`, `body()`, and `getBody()` payloads directly.
+For supported HTTP response types (`Illuminate\Http\Client\Response` and `Psr\Http\Message\ResponseInterface`), mapper reads payload directly.
 
 ```php
 use App\Http\Requests\StoreAirportRequest;

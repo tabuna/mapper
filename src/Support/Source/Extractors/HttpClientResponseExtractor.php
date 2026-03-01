@@ -7,7 +7,47 @@ use Throwable;
 
 class HttpClientResponseExtractor implements ObjectPayloadExtractor
 {
+    protected const LARAVEL_HTTP_RESPONSE_CLASS = 'Illuminate\\Http\\Client\\Response';
+
+    protected const PSR_HTTP_RESPONSE_INTERFACE = 'Psr\\Http\\Message\\ResponseInterface';
+
     public function extract(object $source): ?array
+    {
+        if (! $this->isSupportedSource($source)) {
+            return null;
+        }
+
+        if ($this->isLaravelHttpResponse($source)) {
+            return $this->extractLaravelResponsePayload($source);
+        }
+
+        if ($this->isPsrHttpResponse($source)) {
+            return $this->extractPsrResponsePayload($source);
+        }
+
+        return null;
+    }
+
+    protected function isSupportedSource(object $source): bool
+    {
+        return $this->isLaravelHttpResponse($source) || $this->isPsrHttpResponse($source);
+    }
+
+    protected function isLaravelHttpResponse(object $source): bool
+    {
+        $class = self::LARAVEL_HTTP_RESPONSE_CLASS;
+
+        return class_exists($class) && $source instanceof $class;
+    }
+
+    protected function isPsrHttpResponse(object $source): bool
+    {
+        $interface = self::PSR_HTTP_RESPONSE_INTERFACE;
+
+        return interface_exists($interface) && $source instanceof $interface;
+    }
+
+    protected function extractLaravelResponsePayload(object $source): ?array
     {
         $jsonPayload = $this->extractJsonPayload($source);
 
@@ -24,15 +64,22 @@ class HttpClientResponseExtractor implements ObjectPayloadExtractor
         return $this->decodeJsonArray($body);
     }
 
+    protected function extractPsrResponsePayload(object $source): ?array
+    {
+        $body = $this->extractPsrBodyString($source);
+
+        if (! is_string($body) || $body === '') {
+            return null;
+        }
+
+        return $this->decodeJsonArray($body);
+    }
+
     /**
      * Try response-specific JSON extractors.
      */
     protected function extractJsonPayload(object $source): ?array
     {
-        if (! method_exists($source, 'json')) {
-            return null;
-        }
-
         try {
             $payload = $source->json();
         } catch (Throwable) {
@@ -43,26 +90,24 @@ class HttpClientResponseExtractor implements ObjectPayloadExtractor
     }
 
     /**
-     * Try response-specific body extractors for Laravel HTTP and PSR-7/Guzzle-like responses.
+     * Try response-specific body extractors for Laravel HTTP responses.
      */
     protected function extractBodyString(object $source): ?string
     {
-        if (method_exists($source, 'body')) {
-            try {
-                $body = $source->body();
-            } catch (Throwable) {
-                $body = null;
-            }
-
-            if (is_string($body)) {
-                return $body;
-            }
+        try {
+            $body = $source->body();
+        } catch (Throwable) {
+            $body = null;
         }
 
-        if (! method_exists($source, 'getBody')) {
-            return null;
-        }
+        return is_string($body) ? $body : null;
+    }
 
+    /**
+     * Try response body extractors for PSR-7/Guzzle-like responses.
+     */
+    protected function extractPsrBodyString(object $source): ?string
+    {
         try {
             $stream = $source->getBody();
         } catch (Throwable) {
@@ -77,25 +122,19 @@ class HttpClientResponseExtractor implements ObjectPayloadExtractor
             return null;
         }
 
-        if (method_exists($stream, '__toString')) {
-            try {
-                return (string) $stream;
-            } catch (Throwable) {
-                // no-op: fallback to getContents() below
-            }
+        $streamInterface = 'Psr\\Http\\Message\\StreamInterface';
+
+        if (! interface_exists($streamInterface) || ! $stream instanceof $streamInterface) {
+            return null;
         }
 
-        if (method_exists($stream, 'getContents')) {
-            try {
-                $contents = $stream->getContents();
-            } catch (Throwable) {
-                return null;
-            }
-
-            return is_string($contents) ? $contents : null;
+        try {
+            $contents = $stream->getContents();
+        } catch (Throwable) {
+            return null;
         }
 
-        return null;
+        return is_string($contents) ? $contents : null;
     }
 
     /**

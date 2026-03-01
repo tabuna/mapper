@@ -13,6 +13,7 @@ $airport = map($response)->to(AirportDto::class);
 ```
 
 Mapper reads `json()` first, then falls back to `body()` JSON decoding.
+Supported source class: `Illuminate\Http\Client\Response`.
 
 ## Guzzle / PSR-7 Response
 
@@ -26,6 +27,7 @@ $airport = map($response)->to(AirportDto::class);
 ```
 
 Mapper reads `getBody()` stream and decodes JSON payload.
+Supported source contract: `Psr\Http\Message\ResponseInterface`.
 
 ## cURL
 
