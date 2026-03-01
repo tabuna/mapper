@@ -29,6 +29,16 @@ class SourceNormalizer
         ];
     }
 
+    public function prependObjectExtractor(ObjectPayloadExtractor $extractor): void
+    {
+        array_unshift($this->objectExtractors, $extractor);
+    }
+
+    public function appendObjectExtractor(ObjectPayloadExtractor $extractor): void
+    {
+        $this->objectExtractors[] = $extractor;
+    }
+
     /**
      * Normalize top-level source before mapping starts.
      */

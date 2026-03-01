@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - `with(callable|string)` custom mapper API.
+- `withSourceExtractor(...)` for custom object source payload extraction.
 - `mapUsingContainer(...)` for explicit container resolution.
 - `into(...)` and `intoMany(...)` one-shot mapping API.
 - `useContainer(...)` for one-time global container bootstrap.

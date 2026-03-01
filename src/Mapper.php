@@ -10,6 +10,7 @@ use Psr\Container\ContainerInterface;
 use Tabuna\Map\Support\AttributeRules;
 use Tabuna\Map\Support\ContainerResolver;
 use Tabuna\Map\Support\PsrContainerAdapter;
+use Tabuna\Map\Support\Source\Contracts\ObjectPayloadExtractor;
 use Tabuna\Map\Support\SourceNormalizer;
 use Tabuna\Map\Support\TargetFactory;
 use Tabuna\Map\Support\TargetHydrator;
@@ -161,6 +162,34 @@ class Mapper
     public function with(callable|string $mapper): self
     {
         $this->mappers[] = $mapper;
+
+        return $this;
+    }
+
+    /**
+     * Register custom source extractor for object payload normalization.
+     *
+     * @param ObjectPayloadExtractor|class-string $extractor
+     *
+     * @return $this
+     */
+    public function withSourceExtractor(ObjectPayloadExtractor|string $extractor, bool $prepend = true): self
+    {
+        $resolved = is_string($extractor)
+            ? $this->container->make($extractor)
+            : $extractor;
+
+        if (! $resolved instanceof ObjectPayloadExtractor) {
+            throw new LogicException(
+                'Source extractor must implement '.ObjectPayloadExtractor::class.'.'
+            );
+        }
+
+        if ($prepend) {
+            $this->sourceNormalizer->prependObjectExtractor($resolved);
+        } else {
+            $this->sourceNormalizer->appendObjectExtractor($resolved);
+        }
 
         return $this;
     }

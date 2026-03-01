@@ -15,6 +15,7 @@ use LogicException;
 use Orchestra\Testbench\TestCase;
 use Tabuna\Map\Mapper;
 use Tabuna\Map\Tests\Dummy\CustomMapperStub;
+use Tabuna\Map\Tests\Dummy\CustomSourceExtractorStub;
 use Tabuna\Map\Tests\Dummy\DummyAirport;
 use Tabuna\Map\Tests\Dummy\DummyAirportCamelDto;
 use Tabuna\Map\Tests\Dummy\DummyAirportCamelReadonlyDto;
@@ -26,6 +27,7 @@ use Tabuna\Map\Tests\Dummy\DummyAirportWithPrivateCode;
 use Tabuna\Map\Tests\Dummy\DummyWithContainer;
 use Tabuna\Map\Tests\Dummy\EloquentAirportStub;
 use Tabuna\Map\Tests\Dummy\InvalidMapperStub;
+use Tabuna\Map\Tests\Dummy\InvalidSourceExtractorStub;
 use Tabuna\Map\Tests\Dummy\KernelWithContainerStub;
 use Tabuna\Map\Tests\Dummy\SimplePsrContainer;
 use UnexpectedValueException;
@@ -439,6 +441,51 @@ class MapperTest extends TestCase
 
         $this->assertSame('lpk', $mapped->first()->code);
         $this->assertSame('LIPETSK', $mapped->first()->city);
+    }
+
+    public function testItUsesCustomSourceExtractorInstance(): void
+    {
+        $source = new class
+        {
+            public function payload(): array
+            {
+                return ['code' => 'MUC', 'city' => 'Munich'];
+            }
+        };
+
+        $mapped = Mapper::map($source)
+            ->withSourceExtractor(new CustomSourceExtractorStub())
+            ->to(DummyAirport::class);
+
+        $this->assertSame('MUC', $mapped->code);
+        $this->assertSame('Munich', $mapped->city);
+    }
+
+    public function testItUsesCustomSourceExtractorByClassName(): void
+    {
+        $source = new class
+        {
+            public function payload(): array
+            {
+                return ['code' => 'MAD', 'city' => 'Madrid'];
+            }
+        };
+
+        $mapped = Mapper::map($source)
+            ->withSourceExtractor(CustomSourceExtractorStub::class)
+            ->to(DummyAirport::class);
+
+        $this->assertSame('MAD', $mapped->code);
+        $this->assertSame('Madrid', $mapped->city);
+    }
+
+    public function testItThrowsWhenSourceExtractorIsInvalid(): void
+    {
+        $this->expectException(LogicException::class);
+
+        Mapper::map(['code' => 'LPK'])
+            ->withSourceExtractor(InvalidSourceExtractorStub::class)
+            ->to(DummyAirport::class);
     }
 
     public function testItThrowsWhenMapperIsNotCallable(): void

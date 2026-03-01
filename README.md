@@ -246,6 +246,24 @@ $airport = map($data)
 
 Custom mappers must return an object. If several mappers are registered, the first one is used.
 
+For custom source objects (SDK responses, proprietary request wrappers), add your extractor:
+
+```php
+use Tabuna\Map\Support\Source\Contracts\ObjectPayloadExtractor;
+
+final class CustomApiExtractor implements ObjectPayloadExtractor
+{
+    public function extract(object $source): ?array
+    {
+        return $source instanceof MyApiResponse ? $source->payload() : null;
+    }
+}
+
+$airport = map($apiResponse)
+    ->withSourceExtractor(CustomApiExtractor::class)
+    ->to(AirportDto::class);
+```
+
 
 ### Serializing to Array or JSON
 
