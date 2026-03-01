@@ -14,12 +14,12 @@ $payload = [
     'city' => sanitize_text_field($_POST['city'] ?? ''),
 ];
 
-$airport = Mapper::map($payload)->to(AirportDto::class);
+$airport = map_into($payload, AirportDto::class);
 ```
 
 ## Mapping Arrays of Rows
 
 ```php
 $rows = get_option('airports', []);
-$airports = Mapper::map($rows)->toMany(AirportDto::class);
+$airports = map_into_many($rows, AirportDto::class);
 ```

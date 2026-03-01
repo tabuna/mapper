@@ -8,6 +8,6 @@ final class ImportAirportHandler
 {
     public function __invoke(array $payload): AirportDto
     {
-        return Mapper::map($payload)->to(AirportDto::class);
+        return Mapper::into($payload, AirportDto::class);
     }
 }

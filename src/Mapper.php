@@ -70,6 +70,28 @@ class Mapper
     }
 
     /**
+     * One-shot mapping helper: map source into target class.
+     *
+     * @param class-string $targetClass
+     *
+     * @return mixed
+     */
+    public static function into(mixed $source, string $targetClass): mixed
+    {
+        return self::map($source)->to($targetClass);
+    }
+
+    /**
+     * One-shot collection mapping helper: map source into target class collection.
+     *
+     * @param class-string $targetClass
+     */
+    public static function intoMany(mixed $source, string $targetClass): Collection
+    {
+        return self::map($source)->toMany($targetClass);
+    }
+
+    /**
      * Create a new Mapper instance with an explicit container.
      */
     public static function mapUsingContainer(mixed $source, Container $container): self

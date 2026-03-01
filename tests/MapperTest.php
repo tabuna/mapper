@@ -200,6 +200,44 @@ class MapperTest extends TestCase
         $this->assertSame('Saint Petersburg', $airport->city);
     }
 
+    public function testStaticIntoMapsSourceInOneShot(): void
+    {
+        $mapped = Mapper::into(['code' => 'LPK', 'city' => 'Lipetsk'], DummyAirport::class);
+
+        $this->assertInstanceOf(DummyAirport::class, $mapped);
+        $this->assertSame('LPK', $mapped->code);
+    }
+
+    public function testStaticIntoManyMapsCollectionInOneShot(): void
+    {
+        $mapped = Mapper::intoMany([
+            ['code' => 'LPK', 'city' => 'Lipetsk'],
+            ['code' => 'SVO', 'city' => 'Moscow'],
+        ], DummyAirport::class);
+
+        $this->assertInstanceOf(Collection::class, $mapped);
+        $this->assertSame('SVO', $mapped[1]->code);
+    }
+
+    public function testHelperMapIntoMapsSourceInOneCall(): void
+    {
+        $mapped = map_into(['code' => 'LPK', 'city' => 'Lipetsk'], DummyAirport::class);
+
+        $this->assertInstanceOf(DummyAirport::class, $mapped);
+        $this->assertSame('Lipetsk', $mapped->city);
+    }
+
+    public function testHelperMapIntoManyMapsCollectionInOneCall(): void
+    {
+        $mapped = map_into_many([
+            ['code' => 'LPK', 'city' => 'Lipetsk'],
+            ['code' => 'SVO', 'city' => 'Moscow'],
+        ], DummyAirport::class);
+
+        $this->assertInstanceOf(Collection::class, $mapped);
+        $this->assertSame('LPK', $mapped->first()->code);
+    }
+
     public function testItConvertsMappedObjectToArray(): void
     {
         $data = ['code' => 'LPK', 'city' => 'Lipetsk'];

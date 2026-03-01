@@ -9,7 +9,7 @@ final class AirportController
 {
     public function store(Request $request)
     {
-        $airport = map($request)->to(Airport::class);
+        $airport = map_into($request->all(), Airport::class);
         $airport->save();
 
         return response()->json($airport);
