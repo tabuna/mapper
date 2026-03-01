@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
 - Security policy and code of conduct.
 - CI coverage workflow with 100% line-coverage gate.
 - Reproducible benchmark script (`composer bench`).
+- Automated GitHub release workflow for version tags.
 
 ### Changed
 

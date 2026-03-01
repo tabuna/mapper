@@ -188,6 +188,7 @@ $json = map($airport)->toJson();
 - Psalm static analysis must pass.
 - Pint style checks must pass.
 - Line coverage is enforced at 100% in CI.
+- Tagged versions (`v*`) are published automatically via GitHub Releases.
 
 ### Benchmark
 
