@@ -23,9 +23,11 @@
         "illuminate/collections": "^9.0|^10.0|^11.0|^12.0",
         "illuminate/container": "^9.0|^10.0|^11.0|^12.0",
         "illuminate/contracts": "^9.0|^10.0|^11.0|^12.0",
-        "illuminate/database": "^9.0|^10.0|^11.0|^12.0",
-        "illuminate/http": "^9.0|^10.0|^11.0|^12.0",
         "psr/container": "^1.1|^2.0"
+    },
+    "suggest": {
+        "illuminate/database": "Optional: enables first-class Eloquent model support.",
+        "illuminate/http": "Optional: useful when mapping Laravel HTTP Request objects directly."
     },
     "conflict": {
         "orchestra/testbench-core": "<6.24.1"

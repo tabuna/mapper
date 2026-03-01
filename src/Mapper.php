@@ -8,7 +8,6 @@ use function array_keys;
 use Illuminate\Container\Container;
 use Illuminate\Contracts\Container\Container as ContainerContract;
 use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use InvalidArgumentException;
 use LogicException;
@@ -24,6 +23,11 @@ use UnexpectedValueException;
 
 class Mapper
 {
+    /**
+     * Optional Eloquent base model class used when Illuminate database package is installed.
+     */
+    protected const ELOQUENT_MODEL_CLASS = 'Illuminate\\Database\\Eloquent\\Model';
+
     /**
      * Global configured container used by default for all mapper instances.
      */
@@ -349,7 +353,7 @@ class Mapper
      */
     protected function fill(object $target, array $attributes): object
     {
-        if ($target instanceof Model) {
+        if ($this->isEloquentModel($target)) {
             return $target->fill($attributes);
         }
 
@@ -464,9 +468,50 @@ class Mapper
         return match (true) {
             is_array($item)            => $item,
             $item instanceof Arrayable => $item->toArray(),
-            is_object($item)           => get_object_vars($item),
+            is_object($item)           => $this->normalizeObjectAttributes($item),
             default                    => (array) $item,
         };
+    }
+
+    /**
+     * Normalize an object source using common request-like extractors.
+     */
+    protected function normalizeObjectAttributes(object $item): array
+    {
+        $extractors = [
+            'all',
+            'toArray',
+            'get_params',
+            'getParsedBody',
+        ];
+
+        foreach ($extractors as $method) {
+            $attributes = $this->extractAttributesFromMethod($item, $method);
+
+            if (is_array($attributes)) {
+                return $attributes;
+            }
+        }
+
+        return get_object_vars($item);
+    }
+
+    /**
+     * Try extracting array payload via a parameterless method.
+     */
+    protected function extractAttributesFromMethod(object $item, string $method): ?array
+    {
+        if (! method_exists($item, $method)) {
+            return null;
+        }
+
+        try {
+            $resolved = $item->$method();
+        } catch (Throwable) {
+            return null;
+        }
+
+        return is_array($resolved) ? $resolved : null;
     }
 
     /**
@@ -626,7 +671,7 @@ class Mapper
             return;
         }
 
-        if ($target instanceof Model) {
+        if ($this->isEloquentModel($target)) {
             $fillable = $target->getFillable();
 
             if ($fillable === []) {
@@ -678,6 +723,17 @@ class Mapper
                 implode(', ', $unknown)
             )
         );
+    }
+
+    /**
+     * Check if target is an Eloquent model without hard requiring Illuminate database package.
+     */
+    protected function isEloquentModel(object $target): bool
+    {
+        $modelClass = self::ELOQUENT_MODEL_CLASS;
+
+        return class_exists($modelClass)
+            && $target instanceof $modelClass;
     }
 
     /**

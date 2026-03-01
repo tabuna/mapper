@@ -7,12 +7,10 @@ You can use `tabuna/map` in plugin code to normalize request or option payloads 
 ```php
 <?php
 
-$payload = [
-    'code' => sanitize_text_field($_POST['code'] ?? ''),
-    'city' => sanitize_text_field($_POST['city'] ?? ''),
-];
-
-$airport = map($payload)->to(AirportDto::class);
+function create_airport(WP_REST_Request $request): AirportDto
+{
+    return map($request)->to(AirportDto::class);
+}
 ```
 
 ## Mapping Arrays of Rows

@@ -31,6 +31,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Improved mapper safety for non-public and readonly properties.
-- Improved source normalization behavior and API documentation.
+- Improved source normalization: request-like objects are mapped directly via `all()`, `get_params()`, or `getParsedBody()`.
+- Reduced hard framework coupling: `illuminate/http` and `illuminate/database` are now optional dependencies.
 - Removed `map_into(...)` and `map_into_many(...)` to keep API surface minimal.
 - Added constructor-argument mapping for immutable/readonly DTOs.

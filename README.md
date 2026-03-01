@@ -32,6 +32,7 @@ composer require tabuna/map
 - Fast path from payload to object with low ceremony.
 - Works for both Laravel models and plain PHP DTOs.
 - Extensible via custom mappers only when you need special behavior.
+- Keeps Laravel-specific HTTP/DB packages optional for lean Symfony/WordPress installs.
 - Designed with strict quality gates for predictable upgrades.
 - Includes reproducible benchmark script for performance comparisons.
 
@@ -44,6 +45,7 @@ composer require tabuna/map
 ### Mapping Data
 
 The core function is `map()`, which accepts source data and returns a mapper instance for further transformation.
+It works directly with arrays, JSON, Laravel/Symfony request objects, WP REST requests, and PSR-7 parsed-body requests.
 
 ```php
 use Illuminate\Http\Request;
@@ -124,6 +126,13 @@ map([
     'city' => 'Lipetsk',
     'extra' => 'unexpected',
 ])->strict()->to(AirportDto::class); // throws InvalidArgumentException
+```
+
+Framework request objects work without manual `->all()` extraction:
+
+```php
+$dto = map($symfonyRequest)->to(AirportDto::class);
+$dto = map($wpRestRequest)->to(AirportDto::class);
 ```
 
 If you want explicit one-shot PSR wiring, use:

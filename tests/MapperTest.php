@@ -114,6 +114,89 @@ class MapperTest extends TestCase
         $this->assertSame('Lipetsk', $mapped->city);
     }
 
+    public function testItMapsObjectUsingAllMethodWhenAvailable(): void
+    {
+        $requestLike = new class
+        {
+            public function all(): array
+            {
+                return ['code' => 'LPK', 'city' => 'Lipetsk'];
+            }
+        };
+
+        $mapped = Mapper::map($requestLike)->to(DummyAirport::class);
+
+        $this->assertSame('LPK', $mapped->code);
+        $this->assertSame('Lipetsk', $mapped->city);
+    }
+
+    public function testItMapsObjectUsingWordPressGetParamsMethod(): void
+    {
+        $requestLike = new class
+        {
+            public function get_params(): array
+            {
+                return ['code' => 'LED', 'city' => 'Saint Petersburg'];
+            }
+        };
+
+        $mapped = Mapper::map($requestLike)->to(DummyAirport::class);
+
+        $this->assertSame('LED', $mapped->code);
+        $this->assertSame('Saint Petersburg', $mapped->city);
+    }
+
+    public function testItMapsObjectUsingToArrayMethodWhenAvailable(): void
+    {
+        $requestLike = new class
+        {
+            public function toArray(): array
+            {
+                return ['code' => 'DXB', 'city' => 'Dubai'];
+            }
+        };
+
+        $mapped = Mapper::map($requestLike)->to(DummyAirport::class);
+
+        $this->assertSame('DXB', $mapped->code);
+        $this->assertSame('Dubai', $mapped->city);
+    }
+
+    public function testItMapsObjectUsingPsr7ParsedBodyMethod(): void
+    {
+        $requestLike = new class
+        {
+            public function getParsedBody(): array
+            {
+                return ['code' => 'JFK', 'city' => 'New York'];
+            }
+        };
+
+        $mapped = Mapper::map($requestLike)->to(DummyAirport::class);
+
+        $this->assertSame('JFK', $mapped->code);
+        $this->assertSame('New York', $mapped->city);
+    }
+
+    public function testItFallsBackToPublicPropertiesWhenExtractorThrows(): void
+    {
+        $requestLike = new class
+        {
+            public string $code = 'SVO';
+            public string $city = 'Moscow';
+
+            public function all(): array
+            {
+                throw new LogicException('Cannot read payload.');
+            }
+        };
+
+        $mapped = Mapper::map($requestLike)->to(DummyAirport::class);
+
+        $this->assertSame('SVO', $mapped->code);
+        $this->assertSame('Moscow', $mapped->city);
+    }
+
     public function testItFillsEloquentModelAttributes(): void
     {
         $data = ['code' => 'LPK', 'city' => 'Lipetsk'];
