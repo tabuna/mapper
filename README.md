@@ -36,6 +36,16 @@ composer require tabuna/map
 - Designed with strict quality gates for predictable upgrades.
 - Includes reproducible benchmark script for performance comparisons.
 
+## Internal Architecture
+
+The public API stays minimal (`map()->to()`) while internals are separated by responsibility:
+
+- `Support/ContainerResolver`: global + auto-detected container resolution.
+- `Support/SourceNormalizer`: request/object/JSON payload normalization.
+- `Support/AttributeRules`: `path`, `only`, `except`, `rename`, camel-case transforms.
+- `Support/TargetFactory`: constructor-aware target instantiation.
+- `Support/TargetHydrator`: filling + strict unknown-attribute validation.
+
 ## Framework Auto Integration
 
 - Laravel: container is wired automatically via package discovery.
