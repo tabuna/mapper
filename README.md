@@ -62,6 +62,19 @@ $airports = Mapper::intoMany($rows, Airport::class);
 
 The `to()` method creates a new instance of the target class and populates it with mapped data.
 Only writable public properties are assigned for plain PHP objects (private, protected, static, and readonly properties are skipped).
+For immutable DTOs, constructor arguments are resolved from source keys (and class dependencies are still resolved from container).
+
+```php
+final class AirportDto
+{
+    public function __construct(
+        public readonly string $code,
+        public readonly string $city,
+    ) {}
+}
+
+$airport = map(['code' => 'LPK', 'city' => 'Lipetsk'])->to(AirportDto::class);
+```
 
 If you want explicit one-shot PSR wiring, use:
 

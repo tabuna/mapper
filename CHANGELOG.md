@@ -26,3 +26,4 @@ All notable changes to this project will be documented in this file.
 - Improved mapper safety for non-public and readonly properties.
 - Improved source normalization behavior and API documentation.
 - Removed `map_into(...)` and `map_into_many(...)` to keep API surface minimal.
+- Added constructor-argument mapping for immutable/readonly DTOs.

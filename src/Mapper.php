@@ -10,6 +10,9 @@ use Illuminate\Support\Collection;
 use InvalidArgumentException;
 use LogicException;
 use Psr\Container\ContainerInterface;
+use ReflectionClass;
+use ReflectionException;
+use ReflectionNamedType;
 use ReflectionProperty;
 use Tabuna\Map\Support\PsrContainerAdapter;
 use Tabuna\Map\Support\SymfonyContainerAdapter;
@@ -206,7 +209,8 @@ class Mapper
      */
     protected function mapItem(mixed $item, string $targetClass): mixed
     {
-        $target = $this->container->make($targetClass);
+        $attributes = $this->normalizeAttributes($item);
+        $target = $this->makeTarget($targetClass, $attributes);
 
         foreach ($this->mappers as $mapper) {
             $resolver = is_string($mapper)
@@ -226,21 +230,19 @@ class Mapper
             return $result;
         }
 
-        return $this->fill($target, $item);
+        return $this->fill($target, $attributes);
     }
 
     /**
      * Fill the target object with data from the item.
      *
      * @param object $target
-     * @param mixed  $item
+     * @param array  $attributes
      *
      * @return object
      */
-    protected function fill(object $target, mixed $item): object
+    protected function fill(object $target, array $attributes): object
     {
-        $attributes = $this->normalizeAttributes($item);
-
         if ($target instanceof Model) {
             return $target->fill($attributes);
         }
@@ -252,6 +254,68 @@ class Mapper
         }
 
         return $target;
+    }
+
+    /**
+     * Create target object and resolve constructor arguments from attributes/container.
+     *
+     * @param class-string $targetClass
+     * @param array        $attributes
+     */
+    protected function makeTarget(string $targetClass, array $attributes): object
+    {
+        try {
+            $reflection = new ReflectionClass($targetClass);
+            $constructor = $reflection->getConstructor();
+
+            if ($constructor === null || $constructor->getNumberOfParameters() === 0) {
+                return $this->container->make($targetClass);
+            }
+
+            $arguments = [];
+            $usesSourceAttributes = false;
+
+            foreach ($constructor->getParameters() as $parameter) {
+                $name = $parameter->getName();
+
+                if (array_key_exists($name, $attributes)) {
+                    $arguments[] = $attributes[$name];
+                    $usesSourceAttributes = true;
+
+                    continue;
+                }
+
+                $type = $parameter->getType();
+
+                if ($type instanceof ReflectionNamedType && ! $type->isBuiltin()) {
+                    $arguments[] = $this->container->make($type->getName());
+
+                    continue;
+                }
+
+                if ($parameter->isDefaultValueAvailable()) {
+                    $arguments[] = $parameter->getDefaultValue();
+
+                    continue;
+                }
+
+                if ($parameter->allowsNull()) {
+                    $arguments[] = null;
+
+                    continue;
+                }
+
+                return $this->container->make($targetClass);
+            }
+
+            if (! $usesSourceAttributes) {
+                return $this->container->make($targetClass);
+            }
+
+            return $reflection->newInstanceArgs($arguments);
+        } catch (ReflectionException) {
+            return $this->container->make($targetClass);
+        }
     }
 
     /**

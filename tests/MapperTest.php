@@ -15,6 +15,8 @@ use Tabuna\Map\Tests\Dummy\CustomMapperStub;
 use Tabuna\Map\Tests\Dummy\DummyAirport;
 use Tabuna\Map\Tests\Dummy\DummyAirportHook;
 use Tabuna\Map\Tests\Dummy\DummyAirportPublicPrivateSource;
+use Tabuna\Map\Tests\Dummy\DummyAirportReadonlyDto;
+use Tabuna\Map\Tests\Dummy\DummyAirportReadonlyWithContainer;
 use Tabuna\Map\Tests\Dummy\DummyAirportWithPrivateCode;
 use Tabuna\Map\Tests\Dummy\DummyWithContainer;
 use Tabuna\Map\Tests\Dummy\EloquentAirportStub;
@@ -356,6 +358,27 @@ class MapperTest extends TestCase
         $this->assertIsArray($mapped);
         $this->assertSame('LPK', $mapped['code']);
         $this->assertSame('Lipetsk', $mapped['city']);
+    }
+
+    public function testItMapsReadonlyDtoUsingConstructorArguments(): void
+    {
+        $mapped = Mapper::map(['code' => 'LPK', 'city' => 'Lipetsk'])
+            ->to(DummyAirportReadonlyDto::class);
+
+        $this->assertInstanceOf(DummyAirportReadonlyDto::class, $mapped);
+        $this->assertSame('LPK', $mapped->code);
+        $this->assertSame('Lipetsk', $mapped->city);
+    }
+
+    public function testItMapsReadonlyDtoWithContainerDependency(): void
+    {
+        $mapped = Mapper::map(['code' => 'LED', 'city' => 'Saint Petersburg'])
+            ->to(DummyAirportReadonlyWithContainer::class);
+
+        $this->assertInstanceOf(DummyAirportReadonlyWithContainer::class, $mapped);
+        $this->assertSame('LED', $mapped->code);
+        $this->assertSame('Saint Petersburg', $mapped->city);
+        $this->assertNotEmpty($mapped->version);
     }
 
     public function testItThrowsOnInvalidJson(): void
