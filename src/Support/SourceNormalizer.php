@@ -41,6 +41,12 @@ class SourceNormalizer
      */
     public function normalizeObjectAttributes(object $item): array
     {
+        $validated = $this->extractValidatedAttributes($item);
+
+        if (is_array($validated)) {
+            return $validated;
+        }
+
         $extractors = [
             'all',
             'toArray',
@@ -56,7 +62,55 @@ class SourceNormalizer
             }
         }
 
+        $bags = [
+            'request',
+            'query',
+            'attributes',
+        ];
+
+        foreach ($bags as $bag) {
+            $attributes = $this->extractAttributesFromPropertyBag($item, $bag);
+
+            if (is_array($attributes)) {
+                return $attributes;
+            }
+        }
+
         return get_object_vars($item);
+    }
+
+    /**
+     * Try extracting validated payload from Laravel-style request objects.
+     */
+    public function extractValidatedAttributes(object $item): ?array
+    {
+        $validated = $this->extractAttributesFromMethod($item, 'validated');
+
+        if (is_array($validated)) {
+            return $validated;
+        }
+
+        if (! method_exists($item, 'safe')) {
+            return null;
+        }
+
+        try {
+            $safe = $item->safe();
+        } catch (Throwable) {
+            return null;
+        }
+
+        if (! is_object($safe) || ! method_exists($safe, 'all')) {
+            return null;
+        }
+
+        try {
+            $attributes = $safe->all();
+        } catch (Throwable) {
+            return null;
+        }
+
+        return is_array($attributes) ? $attributes : null;
     }
 
     /**
@@ -75,5 +129,33 @@ class SourceNormalizer
         }
 
         return is_array($resolved) ? $resolved : null;
+    }
+
+    /**
+     * Try extracting array payload from Symfony-like request bags.
+     */
+    public function extractAttributesFromPropertyBag(object $item, string $property): ?array
+    {
+        if (! property_exists($item, $property)) {
+            return null;
+        }
+
+        try {
+            $bag = $item->$property;
+        } catch (Throwable) {
+            return null;
+        }
+
+        if (! is_object($bag) || ! method_exists($bag, 'all')) {
+            return null;
+        }
+
+        try {
+            $attributes = $bag->all();
+        } catch (Throwable) {
+            return null;
+        }
+
+        return is_array($attributes) ? $attributes : null;
     }
 }

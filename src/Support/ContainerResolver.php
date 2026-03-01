@@ -5,7 +5,6 @@ namespace Tabuna\Map\Support;
 use Illuminate\Container\Container;
 use Illuminate\Contracts\Container\Container as ContainerContract;
 use Psr\Container\ContainerInterface;
-use Throwable;
 
 class ContainerResolver
 {
@@ -18,6 +17,11 @@ class ContainerResolver
      * Auto-detected runtime container cached for subsequent mapper instances.
      */
     protected static ?ContainerContract $autoDetectedContainer = null;
+
+    /**
+     * Runtime detector for framework-specific container discovery.
+     */
+    protected static ?FrameworkContainerDetector $detector = null;
 
     /**
      * Resolve container for mapper runtime.
@@ -53,6 +57,7 @@ class ContainerResolver
     {
         self::$globalContainer = null;
         self::$autoDetectedContainer = null;
+        self::$detector = null;
     }
 
     /**
@@ -64,11 +69,8 @@ class ContainerResolver
             return self::$autoDetectedContainer;
         }
 
-        $candidates = [
-            self::detectGlobalContainerVariable(),
-            self::detectSymfonyKernelContainer(),
-            self::detectLaravelContainer(),
-        ];
+        $detector = self::$detector ??= new FrameworkContainerDetector();
+        $candidates = $detector->detectCandidates();
 
         foreach ($candidates as $candidate) {
             $resolved = self::normalizeCandidate($candidate);
@@ -101,47 +103,5 @@ class ContainerResolver
         }
 
         return null;
-    }
-
-    /**
-     * Detect Laravel container from helper runtime.
-     */
-    protected static function detectLaravelContainer(): mixed
-    {
-        if (! function_exists('app')) {
-            return null;
-        }
-
-        try {
-            return app();
-        } catch (Throwable) {
-            return null;
-        }
-    }
-
-    /**
-     * Detect Symfony container exposed by global kernel instance.
-     */
-    protected static function detectSymfonyKernelContainer(): mixed
-    {
-        $kernel = $GLOBALS['kernel'] ?? null;
-
-        if (! is_object($kernel) || ! method_exists($kernel, 'getContainer')) {
-            return null;
-        }
-
-        try {
-            return $kernel->getContainer();
-        } catch (Throwable) {
-            return null;
-        }
-    }
-
-    /**
-     * Detect generic global container variable (for simple bootstrap setups).
-     */
-    protected static function detectGlobalContainerVariable(): mixed
-    {
-        return $GLOBALS['container'] ?? null;
     }
 }

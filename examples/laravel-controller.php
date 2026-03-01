@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
+use App\Http\Requests\StoreAirportRequest;
 use App\Models\Airport;
-use Illuminate\Http\Request;
 
 final class AirportController
 {
-    public function store(Request $request)
+    public function store(StoreAirportRequest $request)
     {
         $airport = map($request)->to(Airport::class);
         $airport->save();

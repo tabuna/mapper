@@ -31,6 +31,8 @@ final class ImportAirportHandler
 }
 ```
 
+`Mapper::into($request, ...)` works with JSON payloads (`toArray()`), form payload bags (`$request->request->all()`), and query bags.
+
 ## Collection Mapping
 
 ```php

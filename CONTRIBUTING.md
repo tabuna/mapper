@@ -12,10 +12,12 @@ composer install
 
 - `src/Mapper.php`: thin public API facade.
 - `src/Support/ContainerResolver.php`: runtime container strategy.
+- `src/Support/FrameworkContainerDetector.php`: framework runtime probes (Laravel/Symfony/global).
 - `src/Support/SourceNormalizer.php`: input normalization from arrays/objects/requests/JSON.
 - `src/Support/AttributeRules.php`: payload shaping and key transforms.
 - `src/Support/TargetFactory.php`: constructor-aware target creation.
 - `src/Support/TargetHydrator.php`: property fill + strict validation.
+- `src/Support/helpers.php`: only global `map()` helper, no framework-specific behavior.
 
 ## Quality Checklist
 

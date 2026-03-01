@@ -23,6 +23,7 @@ composer require tabuna/map
 - [Roadmap](ROADMAP.md)
 - [Changelog](CHANGELOG.md)
 - [Why tabuna/map](docs/comparison/why-tabuna-map.md)
+- [Laravel integration](docs/integrations/laravel.md)
 - [Symfony integration](docs/integrations/symfony.md)
 - [WordPress integration](docs/integrations/wordpress.md)
 - [Benchmarks](benchmarks/README.md)
@@ -41,10 +42,12 @@ composer require tabuna/map
 The public API stays minimal (`map()->to()`) while internals are separated by responsibility:
 
 - `Support/ContainerResolver`: global + auto-detected container resolution.
+- `Support/FrameworkContainerDetector`: isolated Laravel/Symfony/global runtime detection.
 - `Support/SourceNormalizer`: request/object/JSON payload normalization.
 - `Support/AttributeRules`: `path`, `only`, `except`, `rename`, camel-case transforms.
 - `Support/TargetFactory`: constructor-aware target instantiation.
 - `Support/TargetHydrator`: filling + strict unknown-attribute validation.
+- `Support/helpers.php`: only `map()` helper, no framework-specific runtime logic.
 
 ## Framework Auto Integration
 
@@ -56,14 +59,16 @@ The public API stays minimal (`map()->to()`) while internals are separated by re
 
 The core function is `map()`, which accepts source data and returns a mapper instance for further transformation.
 It works directly with arrays, JSON, Laravel/Symfony request objects, WP REST requests, and PSR-7 parsed-body requests.
+For Laravel `FormRequest`, it prefers `validated()` (or `safe()->all()`) over raw `all()`.
+For Symfony requests, it can read request/query bags without manual extraction.
 
 ```php
-use Illuminate\Http\Request;
+use App\Http\Requests\StoreAirportRequest;
 use App\Models\Airport;
 
 class AirportController extends Controller
 {
-    public function store(Request $request)
+    public function store(StoreAirportRequest $request)
     {
         $airport = map($request)->to(Airport::class);
 
@@ -77,7 +82,7 @@ class AirportController extends Controller
 If you prefer one-shot calls, use `Mapper::into()` / `Mapper::intoMany()`:
 
 ```php
-$airport = Mapper::into($request->all(), Airport::class);
+$airport = Mapper::into($request, Airport::class);
 $airports = Mapper::intoMany($rows, Airport::class);
 ```
 

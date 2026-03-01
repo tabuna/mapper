@@ -130,6 +130,75 @@ class MapperTest extends TestCase
         $this->assertSame('Lipetsk', $mapped->city);
     }
 
+    public function testItPrefersValidatedPayloadOverAllMethod(): void
+    {
+        $requestLike = new class
+        {
+            public function validated(): array
+            {
+                return ['code' => 'LPK', 'city' => 'Lipetsk'];
+            }
+
+            public function all(): array
+            {
+                return ['code' => 'RAW', 'city' => 'Raw City'];
+            }
+        };
+
+        $mapped = Mapper::map($requestLike)->to(DummyAirport::class);
+
+        $this->assertSame('LPK', $mapped->code);
+        $this->assertSame('Lipetsk', $mapped->city);
+    }
+
+    public function testItUsesSafeAllPayloadWhenValidatedMethodIsMissing(): void
+    {
+        $requestLike = new class
+        {
+            public function safe(): object
+            {
+                return new class
+                {
+                    public function all(): array
+                    {
+                        return ['code' => 'DXB', 'city' => 'Dubai'];
+                    }
+                };
+            }
+
+            public function all(): array
+            {
+                return ['code' => 'RAW', 'city' => 'Raw City'];
+            }
+        };
+
+        $mapped = Mapper::map($requestLike)->to(DummyAirport::class);
+
+        $this->assertSame('DXB', $mapped->code);
+        $this->assertSame('Dubai', $mapped->city);
+    }
+
+    public function testItFallsBackToAllWhenValidatedExtractionFails(): void
+    {
+        $requestLike = new class
+        {
+            public function validated(): array
+            {
+                throw new LogicException('Validation not available.');
+            }
+
+            public function all(): array
+            {
+                return ['code' => 'SVO', 'city' => 'Moscow'];
+            }
+        };
+
+        $mapped = Mapper::map($requestLike)->to(DummyAirport::class);
+
+        $this->assertSame('SVO', $mapped->code);
+        $this->assertSame('Moscow', $mapped->city);
+    }
+
     public function testItMapsObjectUsingWordPressGetParamsMethod(): void
     {
         $requestLike = new class
@@ -176,6 +245,30 @@ class MapperTest extends TestCase
 
         $this->assertSame('JFK', $mapped->code);
         $this->assertSame('New York', $mapped->city);
+    }
+
+    public function testItMapsObjectUsingRequestPropertyBagWhenAvailable(): void
+    {
+        $requestLike = new class
+        {
+            public object $request;
+
+            public function __construct()
+            {
+                $this->request = new class
+                {
+                    public function all(): array
+                    {
+                        return ['code' => 'AMS', 'city' => 'Amsterdam'];
+                    }
+                };
+            }
+        };
+
+        $mapped = Mapper::map($requestLike)->to(DummyAirport::class);
+
+        $this->assertSame('AMS', $mapped->code);
+        $this->assertSame('Amsterdam', $mapped->city);
     }
 
     public function testItFallsBackToPublicPropertiesWhenExtractorThrows(): void
