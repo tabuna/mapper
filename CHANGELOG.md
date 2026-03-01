@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - Symfony integration bundle (`TabunaMapBundle`).
 - Integration docs for Symfony and WordPress.
 - Contribution guide, roadmap, and comparison notes.
+- Security policy and code of conduct.
 - CI coverage workflow with 100% line-coverage gate.
 - Reproducible benchmark script (`composer bench`).
 

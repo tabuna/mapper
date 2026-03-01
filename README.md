@@ -1,5 +1,10 @@
 # PHP Mapper
 
+[![Tests](https://github.com/tabuna/map/actions/workflows/phpunit.yml/badge.svg)](https://github.com/tabuna/map/actions/workflows/phpunit.yml)
+[![Psalm](https://github.com/tabuna/map/actions/workflows/psalm.yml/badge.svg)](https://github.com/tabuna/map/actions/workflows/psalm.yml)
+[![Style](https://github.com/tabuna/map/actions/workflows/php-cs-fixer.yml/badge.svg)](https://github.com/tabuna/map/actions/workflows/php-cs-fixer.yml)
+[![Coverage](https://github.com/tabuna/map/actions/workflows/coverage.yml/badge.svg)](https://github.com/tabuna/map/actions/workflows/coverage.yml)
+
 A simple and elegant object mapper for PHP.
 It maps arrays, JSON, requests, and collections into Eloquent models or plain classes with a Laravel-first API and framework-agnostic core.
 
@@ -13,6 +18,8 @@ composer require tabuna/map
 ## Documentation
 
 - [Contributing](CONTRIBUTING.md)
+- [Security](SECURITY.md)
+- [Code of Conduct](CODE_OF_CONDUCT.md)
 - [Roadmap](ROADMAP.md)
 - [Changelog](CHANGELOG.md)
 - [Why tabuna/map](docs/comparison/why-tabuna-map.md)
