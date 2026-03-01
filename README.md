@@ -50,7 +50,21 @@ class AirportController extends Controller
 The `to()` method creates a new instance of the target class and populates it with mapped data.
 Only writable public properties are assigned for plain PHP objects (private, protected, static, and readonly properties are skipped).
 
-If you need full control over dependency resolution, use an explicit container:
+If your framework has its own container, configure it once at bootstrap time:
+
+```php
+use Tabuna\Map\Mapper;
+
+Mapper::usePsrContainer($symfonyContainer); // once during bootstrap
+```
+
+After that, your mapping calls stay minimal:
+
+```php
+$airport = map($data)->to(AirportDto::class);
+```
+
+For one-off custom resolution (without global setup), use an explicit container:
 
 ```php
 use Illuminate\Container\Container;

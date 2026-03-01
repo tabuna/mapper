@@ -8,6 +8,9 @@ All notable changes to this project will be documented in this file.
 
 - `with(callable|string)` custom mapper API.
 - `mapUsingContainer(...)` for explicit container resolution.
+- `useContainer(...)` for one-time global container bootstrap.
+- `usePsrContainer(...)` for one-time PSR-11 container bootstrap (Symfony-ready).
+- `resetContainer()` to clear global container configuration.
 - `toMany(...)` explicit collection mapping API.
 - Integration docs for Symfony and WordPress.
 - Contribution guide, roadmap, and comparison notes.

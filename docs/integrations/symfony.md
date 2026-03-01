@@ -1,23 +1,36 @@
 # Symfony Integration
 
-`tabuna/map` can be used in Symfony services with `illuminate/container` as a lightweight resolver.
+`tabuna/map` can use the Symfony PSR-11 container directly.
 
-## Example
+## Bootstrap Once
 
 ```php
 <?php
 
-use Illuminate\Container\Container;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use Tabuna\Map\Mapper;
+
+final class MapperBootstrap
+{
+    public function __construct(ContainerInterface $container)
+    {
+        Mapper::usePsrContainer($container);
+    }
+}
+```
+
+## Use Anywhere (No Per-Call Container)
+
+```php
+<?php
+
 use Tabuna\Map\Mapper;
 
 final class ImportAirportHandler
 {
     public function __invoke(array $payload): AirportDto
     {
-        $container = new Container();
-
-        return Mapper::mapUsingContainer($payload, $container)
-            ->to(AirportDto::class);
+        return Mapper::map($payload)->to(AirportDto::class);
     }
 }
 ```

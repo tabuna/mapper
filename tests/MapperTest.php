@@ -19,10 +19,18 @@ use Tabuna\Map\Tests\Dummy\DummyAirportWithPrivateCode;
 use Tabuna\Map\Tests\Dummy\DummyWithContainer;
 use Tabuna\Map\Tests\Dummy\EloquentAirportStub;
 use Tabuna\Map\Tests\Dummy\InvalidMapperStub;
+use Tabuna\Map\Tests\Dummy\SimplePsrContainer;
 use UnexpectedValueException;
 
 class MapperTest extends TestCase
 {
+    protected function tearDown(): void
+    {
+        Mapper::resetContainer();
+
+        parent::tearDown();
+    }
+
     public function testItMapsArrayToObjectProperties(): void
     {
         $data = ['code' => 'LPK', 'city' => 'Lipetsk'];
@@ -369,5 +377,44 @@ class MapperTest extends TestCase
 
         $this->assertInstanceOf(DummyAirportWithPrivateCode::class, $mapped);
         $this->assertSame('Lipetsk', $mapped->city);
+    }
+
+    public function testItCanUseGlobalIlluminateContainerWithoutPassingItEveryTime(): void
+    {
+        $container = new Container();
+        $container->bind(DummyAirport::class, DummyAirportWithPrivateCode::class);
+
+        Mapper::useContainer($container);
+
+        $mapped = Mapper::map(['city' => 'Lipetsk'])->to(DummyAirport::class);
+
+        $this->assertInstanceOf(DummyAirportWithPrivateCode::class, $mapped);
+        $this->assertSame('Lipetsk', $mapped->city);
+    }
+
+    public function testItCanUseGlobalPsrContainerWithoutPassingItEveryTime(): void
+    {
+        Mapper::usePsrContainer(new SimplePsrContainer([
+            DummyAirport::class => new DummyAirportWithPrivateCode(),
+        ]));
+
+        $mapped = Mapper::map(['city' => 'Lipetsk'])->to(DummyAirport::class);
+
+        $this->assertInstanceOf(DummyAirportWithPrivateCode::class, $mapped);
+        $this->assertSame('Lipetsk', $mapped->city);
+    }
+
+    public function testResetContainerRemovesGlobalContainerConfiguration(): void
+    {
+        $container = new Container();
+        $container->bind(DummyAirport::class, DummyAirportWithPrivateCode::class);
+
+        Mapper::useContainer($container);
+        Mapper::resetContainer();
+
+        $mapped = Mapper::map(['code' => 'LPK', 'city' => 'Lipetsk'])->to(DummyAirport::class);
+
+        $this->assertInstanceOf(DummyAirport::class, $mapped);
+        $this->assertSame('LPK', $mapped->code);
     }
 }

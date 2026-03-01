@@ -8,11 +8,18 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use InvalidArgumentException;
 use LogicException;
+use Psr\Container\ContainerInterface;
 use ReflectionProperty;
+use Tabuna\Map\Support\PsrContainerAdapter;
 use UnexpectedValueException;
 
 class Mapper
 {
+    /**
+     * Global configured container used by default for all mapper instances.
+     */
+    protected static ?Container $globalContainer = null;
+
     /**
      * The source data to be mapped. Can be an object, array, or collection.
      */
@@ -39,7 +46,9 @@ class Mapper
      */
     public function __construct(mixed $source, ?Container $container = null)
     {
-        $this->container = $container ?? Container::getInstance();
+        $this->container = $container
+            ?? self::$globalContainer
+            ?? Container::getInstance();
 
         $this->source = match (true) {
             $source instanceof Arrayable => $source->toArray(),
@@ -66,6 +75,30 @@ class Mapper
     public static function mapUsingContainer(mixed $source, Container $container): self
     {
         return new self($source, $container);
+    }
+
+    /**
+     * Configure global Illuminate container for all future map() calls.
+     */
+    public static function useContainer(Container $container): void
+    {
+        self::$globalContainer = $container;
+    }
+
+    /**
+     * Configure global PSR-11 container for all future map() calls.
+     */
+    public static function usePsrContainer(ContainerInterface $container): void
+    {
+        self::$globalContainer = new PsrContainerAdapter($container);
+    }
+
+    /**
+     * Reset global container configuration.
+     */
+    public static function resetContainer(): void
+    {
+        self::$globalContainer = null;
     }
 
     /**
