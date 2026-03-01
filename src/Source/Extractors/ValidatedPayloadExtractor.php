@@ -7,13 +7,18 @@ use Throwable;
 
 class ValidatedPayloadExtractor implements ObjectPayloadExtractor
 {
+    protected const FORM_REQUEST_CLASS = 'Illuminate\\Foundation\\Http\\FormRequest';
+
+    protected const LARAVEL_VALIDATOR_INTERFACE = 'Illuminate\\Contracts\\Validation\\Validator';
+
     /**
      * Sources for which validated payload strategy is enabled.
      *
      * @var array<int, class-string>
      */
     protected array $supportedClasses = [
-        'Illuminate\\Foundation\\Http\\FormRequest',
+        self::FORM_REQUEST_CLASS,
+        self::LARAVEL_VALIDATOR_INTERFACE,
     ];
 
     public function extract(object $source): ?array
@@ -28,18 +33,29 @@ class ValidatedPayloadExtractor implements ObjectPayloadExtractor
             return $validated;
         }
 
+        if (! $this->isFormRequestSource($source)) {
+            return null;
+        }
+
         return $this->extractSafeArray($source);
     }
 
     protected function isSupportedSource(object $source): bool
     {
         foreach ($this->supportedClasses as $class) {
-            if (class_exists($class) && $source instanceof $class) {
+            if ((class_exists($class) || interface_exists($class)) && $source instanceof $class) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    protected function isFormRequestSource(object $source): bool
+    {
+        $class = self::FORM_REQUEST_CLASS;
+
+        return class_exists($class) && $source instanceof $class;
     }
 
     /**

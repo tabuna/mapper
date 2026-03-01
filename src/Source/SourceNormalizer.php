@@ -4,6 +4,7 @@ namespace Tabuna\Map\Source;
 
 use Tabuna\Map\Source\Contracts\ObjectPayloadExtractor;
 use Tabuna\Map\Source\Extractors\ArrayableObjectExtractor;
+use Tabuna\Map\Source\Extractors\EloquentModelAttributesExtractor;
 use Tabuna\Map\Source\Extractors\HttpClientResponseExtractor;
 use Tabuna\Map\Source\Extractors\IlluminateRequestExtractor;
 use Tabuna\Map\Source\Extractors\PsrServerRequestExtractor;
@@ -26,6 +27,7 @@ class SourceNormalizer
         $this->objectExtractors = $objectExtractors ?? [
             new ValidatedPayloadExtractor(),
             new IlluminateRequestExtractor(),
+            new EloquentModelAttributesExtractor(),
             new SymfonyRequestExtractor(),
             new WordPressRestRequestExtractor(),
             new PsrServerRequestExtractor(),

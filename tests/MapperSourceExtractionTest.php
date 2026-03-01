@@ -15,6 +15,8 @@ use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
 use Tabuna\Map\Mapper;
 use Tabuna\Map\Tests\Dummy\DummyAirport;
 use Tabuna\Map\Tests\Dummy\DummyAirportPublicPrivateSource;
+use Tabuna\Map\Tests\Dummy\EloquentAirportStub;
+use Tabuna\Map\Tests\Dummy\LaravelValidatorStub;
 use Tabuna\Map\Tests\Dummy\WordPressRequestStub;
 
 class MapperSourceExtractionTest extends MapperTestCase
@@ -98,6 +100,19 @@ class MapperSourceExtractionTest extends MapperTestCase
         $this->assertSame('Dubai', $mapped->city);
     }
 
+    public function testItMapsLaravelValidatorContractUsingValidatedPayload(): void
+    {
+        $validator = new LaravelValidatorStub([
+            'code' => 'CDG',
+            'city' => 'Paris',
+        ]);
+
+        $mapped = Mapper::map($validator)->to(DummyAirport::class);
+
+        $this->assertSame('CDG', $mapped->code);
+        $this->assertSame('Paris', $mapped->city);
+    }
+
     public function testItFallsBackToAllWhenValidatedExtractionFails(): void
     {
         $requestLike = new class extends FormRequest
@@ -175,6 +190,24 @@ class MapperSourceExtractionTest extends MapperTestCase
 
         $this->assertSame('DXB', $mapped->code);
         $this->assertSame('Dubai', $mapped->city);
+    }
+
+    public function testItMapsEloquentSourceUsingAttributesWithoutRelations(): void
+    {
+        $source = new EloquentAirportStub();
+        $source->fill([
+            'code' => 'BOS',
+            'city' => 'Boston',
+        ]);
+        $source->setRelation('country', new Collection(['name' => 'USA']));
+
+        $mapped = Mapper::map($source)->toArray();
+
+        $this->assertSame([
+            'code' => 'BOS',
+            'city' => 'Boston',
+        ], $mapped);
+        $this->assertArrayNotHasKey('country', $mapped);
     }
 
     public function testItMapsPsr7ParsedBodyFromServerRequest(): void

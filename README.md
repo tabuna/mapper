@@ -23,6 +23,7 @@ composer require tabuna/map
 - [Roadmap](ROADMAP.md)
 - [Changelog](CHANGELOG.md)
 - [Why tabuna/map](docs/comparison/why-tabuna-map.md)
+- [Laravel before/after](docs/comparison/laravel-before-after.md)
 - [Laravel integration](docs/integrations/laravel.md)
 - [HTTP clients integration](docs/integrations/http-clients.md)
 - [Symfony integration](docs/integrations/symfony.md)
@@ -64,6 +65,8 @@ The public API stays minimal (`map()->to()`) while internals are separated by re
 The core function is `map()`, which accepts source data and returns a mapper instance for further transformation.
 It works directly with arrays, JSON, Laravel/Symfony request objects, WP REST requests, and PSR-7 parsed-body requests.
 For supported Laravel request sources (`Illuminate\Foundation\Http\FormRequest`), it prefers `validated()` (or `safe()->all()`) over raw `all()`.
+For `Illuminate\Contracts\Validation\Validator`, mapper also consumes `validated()` payload directly.
+For Eloquent model sources, mapper uses model attributes payload (without relation tree).
 For Symfony requests, it can read request/query bags without manual extraction.
 For supported HTTP response types (`Illuminate\Http\Client\Response` and `Psr\Http\Message\ResponseInterface`), mapper reads payload directly.
 

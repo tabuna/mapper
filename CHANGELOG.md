@@ -35,7 +35,9 @@ All notable changes to this project will be documented in this file.
 - Improved mapper safety for non-public and readonly properties.
 - Improved source normalization: framework payload extraction now relies on explicit supported classes/contracts instead of generic method probing.
 - Added Laravel FormRequest-aware source normalization: `validated()` / `safe()->all()` now has priority over raw `all()`.
-- Restricted validated payload extraction to explicit supported sources (`Illuminate\Foundation\Http\FormRequest`) instead of generic method probing.
+- Added Laravel Validator contract support: `Illuminate\Contracts\Validation\Validator` now maps via `validated()`.
+- Added Eloquent source normalization via `attributesToArray()` to avoid mapping relation tree by default.
+- Restricted validated payload extraction to explicit supported sources (`Illuminate\Foundation\Http\FormRequest`, `Illuminate\Contracts\Validation\Validator`) instead of generic method probing.
 - Added Symfony request bag normalization (`$request->request->all()` / query bag) for zero-config mapping.
 - Added HTTP client response normalization for Laravel HTTP (`json()` / `body()`) and Guzzle/PSR-7 (`getBody()`).
 - Restricted HTTP response extraction to explicit supported classes/contracts (`Illuminate\Http\Client\Response`, `Psr\Http\Message\ResponseInterface`).
