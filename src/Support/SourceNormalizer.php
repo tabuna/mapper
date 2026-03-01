@@ -35,9 +35,8 @@ class SourceNormalizer
     public function prepareSource(mixed $source): mixed
     {
         return match (true) {
-            $source instanceof Arrayable => $source->toArray(),
-            is_string($source)           => json_decode($source, true, 512, JSON_THROW_ON_ERROR),
-            default                      => $source,
+            is_string($source) => json_decode($source, true, 512, JSON_THROW_ON_ERROR),
+            default            => $source,
         };
     }
 
@@ -51,10 +50,9 @@ class SourceNormalizer
     public function normalizeAttributes(mixed $item): array
     {
         return match (true) {
-            is_array($item)            => $item,
-            $item instanceof Arrayable => $item->toArray(),
-            is_object($item)           => $this->normalizeObjectAttributes($item),
-            default                    => (array) $item,
+            is_array($item)  => $item,
+            is_object($item) => $this->normalizeObjectAttributes($item),
+            default          => (array) $item,
         };
     }
 
@@ -69,6 +67,10 @@ class SourceNormalizer
             if (is_array($attributes)) {
                 return $attributes;
             }
+        }
+
+        if ($item instanceof Arrayable) {
+            return $item->toArray();
         }
 
         return get_object_vars($item);

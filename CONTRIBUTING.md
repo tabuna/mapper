@@ -15,6 +15,7 @@ composer install
 - `src/Support/FrameworkContainerDetector.php`: framework runtime probes (Laravel/Symfony/global).
 - `src/Support/SourceNormalizer.php`: input normalization from arrays/objects/requests/JSON.
 - `src/Support/Source/Extractors/*`: framework/client-specific payload extractors (Laravel request, HTTP clients, Symfony bags).
+  Keep framework extractors explicit (contracts/classes), avoid broad method probing for framework-only behavior.
 - `src/Support/AttributeRules.php`: payload shaping and key transforms.
 - `src/Support/TargetFactory.php`: constructor-aware target creation.
 - `src/Support/TargetHydrator.php`: property fill + strict validation.

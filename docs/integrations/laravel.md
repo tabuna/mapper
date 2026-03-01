@@ -4,8 +4,8 @@
 
 ## FormRequest: Only Validated Data
 
-When source object has `validated()` (or `safe()->all()`), mapper uses that payload first.
-This means `map($request)->to(...)` maps only validated fields for `FormRequest` classes.
+For `Illuminate\Foundation\Http\FormRequest`, mapper uses validated payload first.
+It tries `validated()` and then `safe()->all()`, so `map($request)->to(...)` maps only validated fields.
 
 ```php
 use App\Http\Requests\StoreAirportRequest;

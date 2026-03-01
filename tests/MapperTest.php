@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tabuna\Map\Tests;
 
 use Illuminate\Container\Container;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use InvalidArgumentException;
@@ -132,14 +133,14 @@ class MapperTest extends TestCase
 
     public function testItPrefersValidatedPayloadOverAllMethod(): void
     {
-        $requestLike = new class
+        $requestLike = new class extends FormRequest
         {
-            public function validated(): array
+            public function validated($key = null, $default = null)
             {
                 return ['code' => 'LPK', 'city' => 'Lipetsk'];
             }
 
-            public function all(): array
+            public function all($keys = null): array
             {
                 return ['code' => 'RAW', 'city' => 'Raw City'];
             }
@@ -151,7 +152,65 @@ class MapperTest extends TestCase
         $this->assertSame('Lipetsk', $mapped->city);
     }
 
-    public function testItUsesSafeAllPayloadWhenValidatedMethodIsMissing(): void
+    public function testItUsesSafeAllPayloadWhenValidatedPayloadFails(): void
+    {
+        $requestLike = new class extends FormRequest
+        {
+            public function validated($key = null, $default = null)
+            {
+                throw new LogicException('Validation not available.');
+            }
+
+            public function safe(?array $keys = null)
+            {
+                return new class
+                {
+                    public function all(): array
+                    {
+                        return ['code' => 'DXB', 'city' => 'Dubai'];
+                    }
+                };
+            }
+
+            public function all($keys = null): array
+            {
+                return ['code' => 'RAW', 'city' => 'Raw City'];
+            }
+        };
+
+        $mapped = Mapper::map($requestLike)->to(DummyAirport::class);
+
+        $this->assertSame('DXB', $mapped->code);
+        $this->assertSame('Dubai', $mapped->city);
+    }
+
+    public function testItFallsBackToAllWhenValidatedExtractionFails(): void
+    {
+        $requestLike = new class extends FormRequest
+        {
+            public function validated($key = null, $default = null)
+            {
+                throw new LogicException('Validation not available.');
+            }
+
+            public function safe(?array $keys = null)
+            {
+                throw new LogicException('Safe payload is not available.');
+            }
+
+            public function all($keys = null): array
+            {
+                return ['code' => 'SVO', 'city' => 'Moscow'];
+            }
+        };
+
+        $mapped = Mapper::map($requestLike)->to(DummyAirport::class);
+
+        $this->assertSame('SVO', $mapped->code);
+        $this->assertSame('Moscow', $mapped->city);
+    }
+
+    public function testItIgnoresSafeMethodForUnsupportedSourceClass(): void
     {
         $requestLike = new class
         {
@@ -174,29 +233,8 @@ class MapperTest extends TestCase
 
         $mapped = Mapper::map($requestLike)->to(DummyAirport::class);
 
-        $this->assertSame('DXB', $mapped->code);
-        $this->assertSame('Dubai', $mapped->city);
-    }
-
-    public function testItFallsBackToAllWhenValidatedExtractionFails(): void
-    {
-        $requestLike = new class
-        {
-            public function validated(): array
-            {
-                throw new LogicException('Validation not available.');
-            }
-
-            public function all(): array
-            {
-                return ['code' => 'SVO', 'city' => 'Moscow'];
-            }
-        };
-
-        $mapped = Mapper::map($requestLike)->to(DummyAirport::class);
-
-        $this->assertSame('SVO', $mapped->code);
-        $this->assertSame('Moscow', $mapped->city);
+        $this->assertSame('RAW', $mapped->code);
+        $this->assertSame('Raw City', $mapped->city);
     }
 
     public function testItMapsObjectUsingWordPressGetParamsMethod(): void
