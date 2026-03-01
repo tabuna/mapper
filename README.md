@@ -14,8 +14,17 @@ composer require tabuna/map
 
 - [Contributing](CONTRIBUTING.md)
 - [Roadmap](ROADMAP.md)
+- [Changelog](CHANGELOG.md)
+- [Why tabuna/map](docs/comparison/why-tabuna-map.md)
 - [Symfony integration](docs/integrations/symfony.md)
 - [WordPress integration](docs/integrations/wordpress.md)
+
+## Why This Package
+
+- Fast path from payload to object with low ceremony.
+- Works for both Laravel models and plain PHP DTOs.
+- Extensible via custom mappers only when you need special behavior.
+- Designed with strict quality gates for predictable upgrades.
 
 ### Mapping Data
 
