@@ -7,4 +7,4 @@ $payload = [
     'city' => sanitize_text_field($_POST['city'] ?? ''),
 ];
 
-$airport = map_into($payload, AirportDto::class);
+$airport = map($payload)->to(AirportDto::class);

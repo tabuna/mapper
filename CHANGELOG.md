@@ -14,7 +14,6 @@ All notable changes to this project will be documented in this file.
 - `mapUsingPsrContainer(...)` for explicit one-shot PSR-11 mapping.
 - `resetContainer()` to clear global container configuration.
 - `toMany(...)` explicit collection mapping API.
-- `map_into(...)` and `map_into_many(...)` helper shortcuts.
 - Runtime auto-detection for containers from `$GLOBALS['kernel']` and `$GLOBALS['container']`.
 - Laravel auto-wiring through package service provider.
 - Symfony integration bundle (`TabunaMapBundle`).
@@ -26,3 +25,4 @@ All notable changes to this project will be documented in this file.
 
 - Improved mapper safety for non-public and readonly properties.
 - Improved source normalization behavior and API documentation.
+- Removed `map_into(...)` and `map_into_many(...)` to keep API surface minimal.

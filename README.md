@@ -60,13 +60,6 @@ $airport = Mapper::into($request->all(), Airport::class);
 $airports = Mapper::intoMany($rows, Airport::class);
 ```
 
-Or helper shortcuts:
-
-```php
-$airport = map_into($request->all(), Airport::class);
-$airports = map_into_many($rows, Airport::class);
-```
-
 The `to()` method creates a new instance of the target class and populates it with mapped data.
 Only writable public properties are assigned for plain PHP objects (private, protected, static, and readonly properties are skipped).
 
