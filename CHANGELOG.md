@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
 - Integration docs for Symfony and WordPress.
 - Contribution guide, roadmap, and comparison notes.
 - CI coverage workflow with 100% line-coverage gate.
+- Reproducible benchmark script (`composer bench`).
 
 ### Changed
 

@@ -18,6 +18,7 @@ composer require tabuna/map
 - [Why tabuna/map](docs/comparison/why-tabuna-map.md)
 - [Symfony integration](docs/integrations/symfony.md)
 - [WordPress integration](docs/integrations/wordpress.md)
+- [Benchmarks](benchmarks/README.md)
 
 ## Why This Package
 
@@ -25,6 +26,7 @@ composer require tabuna/map
 - Works for both Laravel models and plain PHP DTOs.
 - Extensible via custom mappers only when you need special behavior.
 - Designed with strict quality gates for predictable upgrades.
+- Includes reproducible benchmark script for performance comparisons.
 
 ## Framework Auto Integration
 
@@ -179,3 +181,9 @@ $json = map($airport)->toJson();
 - Psalm static analysis must pass.
 - Pint style checks must pass.
 - Line coverage is enforced at 100% in CI.
+
+### Benchmark
+
+```bash
+composer bench
+```
