@@ -2,6 +2,17 @@
 
 `tabuna/map` can use Symfony container automatically.
 
+## ObjectMapper-Style Features
+
+`tabuna/map` now supports the same core day-to-day workflows:
+
+- map to new class;
+- map to existing object;
+- infer target from `#[Tabuna\Map\Attribute\Map(target: ...)]`;
+- property-level `source` / `target` / `if` / `transform` attribute rules.
+
+See parity notes: [ObjectMapper parity](../comparison/object-mapper-parity.md).
+
 ## Register Bundle Once
 
 ```php
@@ -32,6 +43,14 @@ final class ImportAirportHandler
 ```
 
 `Mapper::into($request, ...)` works with JSON payloads (`toArray()`), form payload bags (`$request->request->all()`), and query bags.
+
+Update existing object:
+
+```php
+$entity = $repository->find($id);
+
+map($dto)->to($entity);
+```
 
 ## Collection Mapping
 

@@ -38,6 +38,12 @@ All notable changes to this project will be documented in this file.
 - Added Laravel Validator contract support: `Illuminate\Contracts\Validation\Validator` now maps via `validated()`.
 - Added Eloquent source normalization via `attributesToArray()` to avoid mapping relation tree by default.
 - Restricted validated payload extraction to explicit supported sources (`Illuminate\Foundation\Http\FormRequest`, `Illuminate\Contracts\Validation\Validator`) instead of generic method probing.
+- Added ObjectMapper-style attribute API: `#[Tabuna\Map\Attribute\Map]` for class/property mapping metadata.
+- Added mapping to existing object instances via `map($source)->to($existingObject)`.
+- Added class-level target inference via `map($source)->to()` when source has `#[Map(target: ...)]`.
+- Added `if` and `transform` mapping callables with service-class resolution support.
+- Added class-level transform support before hydration.
+- Added source-vs-target metadata precedence: source property mapping rules override target-side source mapping rules.
 - Added Symfony request bag normalization (`$request->request->all()` / query bag) for zero-config mapping.
 - Added HTTP client response normalization for Laravel HTTP (`json()` / `body()`) and Guzzle/PSR-7 (`getBody()`).
 - Restricted HTTP response extraction to explicit supported classes/contracts (`Illuminate\Http\Client\Response`, `Psr\Http\Message\ResponseInterface`).

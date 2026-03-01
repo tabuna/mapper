@@ -14,6 +14,7 @@ use Tabuna\Map\Source\SourceNormalizer;
 use Tabuna\Map\Target\TargetFactory;
 use Tabuna\Map\Target\TargetHydrator;
 use Tabuna\Map\Transform\AttributeRules;
+use Tabuna\Map\Transform\MapAttributeProcessor;
 use UnexpectedValueException;
 
 class Mapper
@@ -36,6 +37,8 @@ class Mapper
     protected SourceNormalizer $sourceNormalizer;
 
     protected AttributeRules $attributeRules;
+
+    protected MapAttributeProcessor $mapAttributeProcessor;
 
     protected TargetFactory $targetFactory;
 
@@ -60,6 +63,7 @@ class Mapper
         $this->container = ContainerResolver::resolve($container);
         $this->sourceNormalizer = new SourceNormalizer();
         $this->attributeRules = new AttributeRules();
+        $this->mapAttributeProcessor = new MapAttributeProcessor($this->container);
         $this->targetFactory = new TargetFactory($this->container);
         $this->targetHydrator = new TargetHydrator();
 
@@ -81,13 +85,13 @@ class Mapper
     /**
      * One-shot mapping helper: map source into target class.
      *
-     * @param class-string $targetClass
+     * @param class-string|object|null $target
      *
      * @return mixed
      */
-    public static function into(mixed $source, string $targetClass): mixed
+    public static function into(mixed $source, string|object|null $target = null): mixed
     {
-        return self::map($source)->to($targetClass);
+        return self::map($source)->to($target);
     }
 
     /**
@@ -275,20 +279,24 @@ class Mapper
     /**
      * Perform mapping to target class or object.
      *
-     * @param class-string $targetClass
+     * @param class-string|object|null $target
      *
      * @return mixed|Collection
      */
-    public function to(string $targetClass)
+    public function to(string|object|null $target = null)
     {
         if ($this->isCollection) {
             $this->assertCollectionSourceIsIterable();
 
+            if (is_object($target)) {
+                throw new InvalidArgumentException('Collection mode expects target class name or class-level inferred target.');
+            }
+
             return Collection::make($this->source)
-                ->map(fn ($item) => $this->mapItem($item, $targetClass));
+                ->map(fn ($item) => $this->mapItem($item, $target));
         }
 
-        return $this->mapItem($this->source, $targetClass);
+        return $this->mapItem($this->source, $target);
     }
 
     /**
@@ -304,18 +312,24 @@ class Mapper
     /**
      * Map a single item to the target class.
      *
-     * @param mixed        $item
-     * @param class-string $targetClass
+     * @param mixed                    $item
+     * @param class-string|object|null $target
      *
      * @return mixed
      */
-    protected function mapItem(mixed $item, string $targetClass): mixed
+    protected function mapItem(mixed $item, string|object|null $target): mixed
     {
+        $targetClass = $this->resolveTargetClass($item, $target);
         $attributes = $this->normalizeForMapping($item);
-        $target = $this->makeTarget($targetClass, $attributes);
+        $targetObject = is_object($target) ? $target : $this->makeTarget($targetClass, $attributes);
+
+        if (is_object($item)) {
+            $targetObject = $this->mapAttributeProcessor->applyClassTransform($item, $targetObject, $targetClass);
+            $attributes = $this->mapAttributeProcessor->applyPropertyMappings($item, $targetObject, $attributes);
+        }
 
         if ($this->strict && $this->mappers === []) {
-            $this->assertNoUnknownAttributes($targetClass, $target, $attributes);
+            $this->assertNoUnknownAttributes($targetClass, $targetObject, $attributes);
         }
 
         foreach ($this->mappers as $mapper) {
@@ -327,7 +341,7 @@ class Mapper
                 throw new LogicException('Each mapper must be a callable or an invokable class name.');
             }
 
-            $result = $resolver($item, $target);
+            $result = $resolver($item, $targetObject);
 
             if (! is_object($result)) {
                 throw new UnexpectedValueException('Custom mapper must return an object.');
@@ -336,7 +350,38 @@ class Mapper
             return $result;
         }
 
-        return $this->fill($target, $attributes);
+        return $this->fill($targetObject, $attributes);
+    }
+
+    /**
+     * Resolve effective target class from explicit argument or source metadata.
+     *
+     * @param mixed                    $item
+     * @param class-string|object|null $target
+     *
+     * @return class-string
+     */
+    protected function resolveTargetClass(mixed $item, string|object|null $target): string
+    {
+        if (is_object($target)) {
+            return $target::class;
+        }
+
+        if (is_string($target) && $target !== '') {
+            return $target;
+        }
+
+        if (is_object($item)) {
+            $resolved = $this->mapAttributeProcessor->resolveTargetClass($item);
+
+            if (is_string($resolved) && $resolved !== '') {
+                return $resolved;
+            }
+        }
+
+        throw new InvalidArgumentException(
+            'Target class is required. Pass ->to(FQCN|object) or annotate source with #[\\Tabuna\\Map\\Attribute\\Map(target: ...)].'
+        );
     }
 
     /**

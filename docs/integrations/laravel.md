@@ -30,6 +30,19 @@ final class AirportController
 }
 ```
 
+## Update Existing Model
+
+```php
+public function update(StoreAirportRequest $request, Airport $airport)
+{
+    map($request)->to($airport); // updates existing model instance
+
+    $airport->save();
+
+    return response()->json($airport);
+}
+```
+
 ## Validator Contract Support
 
 Mapper can map directly from `Illuminate\Contracts\Validation\Validator` using `validated()` payload:

@@ -23,6 +23,7 @@ composer require tabuna/map
 - [Roadmap](ROADMAP.md)
 - [Changelog](CHANGELOG.md)
 - [Why tabuna/map](docs/comparison/why-tabuna-map.md)
+- [ObjectMapper parity](docs/comparison/object-mapper-parity.md)
 - [Laravel before/after](docs/comparison/laravel-before-after.md)
 - [Laravel integration](docs/integrations/laravel.md)
 - [HTTP clients integration](docs/integrations/http-clients.md)
@@ -34,6 +35,7 @@ composer require tabuna/map
 
 - Fast path from payload to object with low ceremony.
 - Works for both Laravel models and plain PHP DTOs.
+- Covers core ObjectMapper-style features (existing target update, attribute-based source/target rules, conditional/transform mapping).
 - Extensible via custom mappers only when you need special behavior.
 - Keeps Laravel-specific HTTP/DB packages optional for lean Symfony/WordPress installs.
 - Designed with strict quality gates for predictable upgrades.
@@ -85,6 +87,20 @@ class AirportController extends Controller
         return response()->json($airport);
     }
 }
+```
+
+You can also map into an existing object (update mode):
+
+```php
+$existing = $repository->find($id);
+
+map($request)->to($existing);
+```
+
+`to()` supports inferred class-level target when source class has `#[Tabuna\Map\Attribute\Map(target: ...)]`:
+
+```php
+$entity = map($dto)->to();
 ```
 
 If you prefer one-shot calls, use `Mapper::into()` / `Mapper::intoMany()`:
@@ -250,6 +266,35 @@ $airport = map($data)
 ```
 
 Custom mappers must return an object. If several mappers are registered, the first one is used.
+
+### Attribute-Based Mapping
+
+`tabuna/map` supports ObjectMapper-style mapping attributes:
+
+```php
+use Tabuna\Map\Attribute\Map;
+
+#[Map(target: Product::class)]
+final class ProductInput
+{
+    #[Map(target: 'email')]
+    public string $customerEmail = '';
+
+    #[Map(if: false)]
+    public string $internalNotes = '';
+}
+```
+
+Target-side source mapping is also supported:
+
+```php
+#[Map(source: ApiPayload::class)]
+final class ProductDto
+{
+    #[Map(source: 'product_name')]
+    public string $name = '';
+}
+```
 
 For custom source objects (SDK responses, proprietary request wrappers), add your extractor:
 

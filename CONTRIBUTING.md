@@ -18,6 +18,9 @@ composer install
 - `src/Source/Extractors/*`: framework/client-specific payload extractors (Laravel request, HTTP clients, Symfony bags).
   Keep framework extractors explicit (contracts/classes), avoid broad method probing for framework-only behavior.
 - `src/Transform/AttributeRules.php`: payload shaping and key transforms.
+- `src/Attribute/Map.php`: attribute API for source/target mapping metadata.
+- `src/Transform/MapAttributeProcessor.php`: class/property `#[Map]` resolution (`source`/`target`/`if`/`transform`).
+- `src/Contracts/ConditionCallableInterface.php` and `src/Contracts/TransformCallableInterface.php`: service contracts for mapping conditions/transforms.
 - `src/Target/TargetFactory.php`: constructor-aware target creation.
 - `src/Target/TargetHydrator.php`: property fill + strict validation.
 - `src/Target/EloquentModelSupport.php`: isolated Eloquent-specific hydration/strict rules.
