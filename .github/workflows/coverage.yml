@@ -1,0 +1,35 @@
+name: Coverage
+
+on:
+  push:
+  pull_request:
+    paths:
+      - '**.php'
+      - 'phpunit.xml'
+      - 'composer.json'
+      - 'composer.lock'
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code 🛎️
+        uses: actions/checkout@v4
+
+      - name: Setup PHP with pcov 🔧
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.3
+          coverage: pcov
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv, imagick, fileinfo
+
+      - name: Install dependencies 🔧
+        run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
+      - name: Run tests with coverage 🧪
+        run: vendor/bin/phpunit --coverage-clover coverage.xml --colors=never
+
+      - name: Enforce 100% line coverage ✅
+        run: |
+          php -r '$xml = simplexml_load_file("coverage.xml"); $lineRate = (float) $xml->project["line-rate"]; $coverage = round($lineRate * 100, 2); echo "Line coverage: {$coverage}%\n"; if ($lineRate < 1.0) { fwrite(STDERR, "Expected 100% line coverage.\n"); exit(1); }'

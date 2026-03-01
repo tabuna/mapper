@@ -1,23 +1,21 @@
-name: Check & fix styling
+name: Code Style
 
 on:
-  push: # (or pull requests)
+  push:
+  pull_request:
     paths:
       - '.github/workflows/**'
       - '**.php'
-      - 'phpunit.xml'
+      - 'pint.json'
       - 'composer.json'
-      - 'composer.lock'
 
 jobs:
-  php-cs-fixer:
+  pint:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
 
       - name: Setup PHP 🔧
         uses: shivammathur/setup-php@v2
@@ -32,10 +30,5 @@ jobs:
       - name: Install Dependencies 🔧
         run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
 
-      - name: Run Pint
-        run: vendor/bin/pint
-
-      - name: Commit changes
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: Fixed code style
+      - name: Run Pint (check mode)
+        run: vendor/bin/pint --test

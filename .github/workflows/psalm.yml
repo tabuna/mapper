@@ -2,9 +2,12 @@ name: Psalm
 
 on:
   push:
+  pull_request:
     paths:
       - '**.php'
-      - 'psalm.xml.dist'
+      - 'psalm.xml'
+      - 'composer.json'
+      - 'composer.lock'
 
 jobs:
   psalm:

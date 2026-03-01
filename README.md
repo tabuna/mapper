@@ -109,3 +109,10 @@ $json = map($airport)->toJson();
 ```
 
 `toArray()` serializes public object properties and supports arrays / `Arrayable` sources.
+
+### Quality Gates
+
+- Tests must pass on supported PHP/Laravel matrix.
+- Psalm static analysis must pass.
+- Pint style checks must pass.
+- Line coverage is enforced at 100% in CI.
